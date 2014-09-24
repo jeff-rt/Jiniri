@@ -19,7 +19,7 @@ public class Multiplet {
         trytes = new Tryte[width];
         for (int i = 0; i < getWidth(); i++) {
 
-            trytes[i] = Tryte.ZERO;
+            set(i, Tryte.ZERO);
         }
     }
 
@@ -28,11 +28,29 @@ public class Multiplet {
         return trytes.length;
     }
 
+    public Tryte[] getTrytes() {
+
+        final Tryte[] trytes = new Tryte[getWidth()];
+        System.arraycopy(this.trytes, 0, trytes, 0, this.trytes.length);
+
+        return trytes;
+    }
+
+    public Tryte get(final int index) {
+
+        return trytes[index];
+    }
+
+    public void set(final int index, final Tryte tryte) {
+
+        trytes[index] = tryte;
+    }
+
     public Multiplet not() {
 
         for (int i = 0; i < getWidth(); i++) {
 
-            trytes[i] = trytes[i].not();
+            set(i, get(i).not());
         }
 
         return this;
@@ -44,7 +62,7 @@ public class Multiplet {
 
         for (int i = 0; i < getWidth(); i++) {
 
-            trytes[i] = trytes[i].and(multiplet.trytes[i]);
+            set(i, get(i).and(multiplet.get(i)));
         }
 
         return this;
@@ -56,7 +74,7 @@ public class Multiplet {
 
         for (int i = 0; i < getWidth(); i++) {
 
-            trytes[i] = trytes[i].or(multiplet.trytes[i]);
+            set(i, get(i).or(multiplet.get(i)));
         }
 
         return this;
@@ -68,7 +86,7 @@ public class Multiplet {
 
         for (int i = 0; i < getWidth(); i++) {
 
-            trytes[i] = trytes[i].xor(multiplet.trytes[i]);
+            set(i, get(i).xor(multiplet.get(i)));
         }
 
         return this;
@@ -78,7 +96,7 @@ public class Multiplet {
 
         for (int i = 0; i < getWidth(); i++) {
 
-            trytes[i] = trytes[i].neg();
+            set(i, get(i).neg());
         }
 
         return this;
@@ -91,10 +109,10 @@ public class Multiplet {
         Tryte previousOverflow = Tryte.ZERO;
         for (int i = 0; i < getWidth(); i++) {
 
-            Tryte currentOverflow = trytes[i].addOverflow(previousOverflow);
-            trytes[i] = trytes[i].add(previousOverflow);
-            currentOverflow = currentOverflow.add(trytes[i].addOverflow(multiplet.trytes[i]));
-            trytes[i] = trytes[i].add(multiplet.trytes[i]);
+            Tryte currentOverflow = get(i).addOverflow(previousOverflow);
+            set(i, get(i).add(previousOverflow));
+            currentOverflow = currentOverflow.add(get(i).addOverflow(multiplet.get(i)));
+            set(i, get(i).add(multiplet.get(i)));
             previousOverflow = currentOverflow;
         }
 
@@ -159,7 +177,7 @@ public class Multiplet {
         BigInteger value = BigInteger.ZERO;
         for (int i = getWidth(); i-- > 0; ) {
 
-            value = value.multiply(COEFFICIENT).add(BigInteger.valueOf(trytes[i].getValue()));
+            value = value.multiply(COEFFICIENT).add(BigInteger.valueOf(get(i).getValue()));
         }
 
         return value.toString();
@@ -171,7 +189,7 @@ public class Multiplet {
         int hashCode = 0;
         for (int i = 0; i < getWidth(); i++) {
 
-            hashCode ^= trytes[i].hashCode() * (i + 1);
+            hashCode ^= get(i).hashCode() * (i + 1);
         }
 
         return hashCode;
@@ -190,7 +208,7 @@ public class Multiplet {
         final Tryte[] widerMultipletTrytes = getWidth() >= ((Multiplet)obj).getWidth() ? trytes : ((Multiplet)obj).trytes;
         for (int i = 0; i < minWidth; i++) {
 
-            if (trytes[i].getValue() != ((Multiplet)obj).trytes[i].getValue()) {
+            if (get(i).getValue() != ((Multiplet)obj).get(i).getValue()) {
 
                 return false;
             }
@@ -210,10 +228,7 @@ public class Multiplet {
     public Multiplet clone() {
 
         final Multiplet multiplet = new Multiplet(getWidth());
-        for (int i = 0; i < multiplet.getWidth(); i++) {
-
-            multiplet.trytes[i] = trytes[i];
-        }
+        System.arraycopy(trytes, 0, multiplet.trytes, 0, getWidth());
 
         return multiplet;
     }

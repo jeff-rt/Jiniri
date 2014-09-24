@@ -14,13 +14,25 @@ public class Singlet extends Multiplet {
         super(WIDTH);
     }
 
-    public Tryte get() {
+    public Singlet(final Tryte[] trytes, final int offset, final int length) {
 
-        return trytes[0];
+        super(WIDTH);
+
+        if (length < 1 || length > getWidth()) {
+
+            throw new IllegalArgumentException("Illegal length: " + length);
+        }
+
+        System.arraycopy(trytes, offset, this.trytes, 0, length);
     }
 
-    public void set(final Tryte tryte) {
+    public Singlet(final Tryte[] trytes, final int offset) {
 
-        trytes[0] = tryte;
+        this(trytes, offset, WIDTH);
+    }
+
+    public Singlet(final Tryte... trytes) {
+
+        this(trytes, 0);
     }
 }

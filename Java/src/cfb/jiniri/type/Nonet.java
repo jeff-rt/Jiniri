@@ -14,13 +14,25 @@ public class Nonet extends Multiplet {
         super(WIDTH);
     }
 
-    public Tryte get(final int index) {
+    public Nonet(final Tryte[] trytes, final int offset, final int length) {
 
-        return trytes[index];
+        super(WIDTH);
+
+        if (length < 1 || length > getWidth()) {
+
+            throw new IllegalArgumentException("Illegal length: " + length);
+        }
+
+        System.arraycopy(trytes, offset, this.trytes, 0, length);
     }
 
-    public void set(final int index, final Tryte tryte) {
+    public Nonet(final Tryte[] trytes, final int offset) {
 
-        trytes[index] = tryte;
+        this(trytes, offset, WIDTH);
+    }
+
+    public Nonet(final Tryte... trytes) {
+
+        this(trytes, 0);
     }
 }
