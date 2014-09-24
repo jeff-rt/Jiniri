@@ -54,7 +54,7 @@ public class Tryte {
 
     public Tryte(final Trit[] trits, final int offset, final int length) {
 
-        if (length > NUMBER_OF_TRITS) {
+        if (length < 1 || length > NUMBER_OF_TRITS) {
 
             throw new IllegalArgumentException("Illegal number of trits: " + length);
         }
