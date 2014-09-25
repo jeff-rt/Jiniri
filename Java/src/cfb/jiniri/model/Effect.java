@@ -23,6 +23,11 @@ public class Effect {
     public Effect(final Multiplet id, final Singlet[] data, final Multiplet entityId, final Multiplet environmentId,
                   final Singlet time, final Singlet delay, final Singlet duration) {
 
+        if (data.length < 1) {
+
+            throw new IllegalArgumentException("No data");
+        }
+
         this.id = id.clone();
 
         this.data = new Singlet[data.length];
@@ -48,6 +53,11 @@ public class Effect {
     public Singlet[] getData() {
 
         return data;
+    }
+
+    public int getDataSize() {
+
+        return getData()[0].getWidth() * getData().length;
     }
 
     public Multiplet getEntityId() {
