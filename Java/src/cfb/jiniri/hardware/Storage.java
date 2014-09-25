@@ -3,7 +3,7 @@ package cfb.jiniri.hardware;
 import cfb.jiniri.ternary.Tryte;
 
 /**
- * 2014 Come-from-Beyond
+ * (c) 2014 Come-from-Beyond
  */
 public interface Storage {
 
