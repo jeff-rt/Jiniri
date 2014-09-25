@@ -10,7 +10,7 @@ import java.nio.ByteOrder;
  */
 public class Converter {
 
-    private static final int TRYTE_SIZE = Integer.BYTES + Short.BYTES;
+    public static final int TRYTE_SIZE = Integer.BYTES + Short.BYTES;
 
     public static byte[] getBytes(final Tryte[] trytes) {
 
