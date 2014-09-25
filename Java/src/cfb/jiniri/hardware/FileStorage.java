@@ -1,6 +1,7 @@
 package cfb.jiniri.hardware;
 
 import cfb.jiniri.ternary.Tryte;
+import cfb.jiniri.util.Converter;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -24,8 +25,6 @@ public class FileStorage implements Storage {
         LOADING_ENVIRONMENTS,
         LOADING_EFFECTS
     }
-
-    private static final int TRYTE_SIZE = 4 + 2;
 
     private static final Tryte[] TERMINATOR = new Tryte[0];
 
@@ -242,14 +241,11 @@ public class FileStorage implements Storage {
 
     private void storeTrytes(final Tryte[] trytes) {
 
-        final ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + trytes.length * TRYTE_SIZE);
+        final byte[] bytes = Converter.getBytes(trytes);
+        final ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + bytes.length);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putInt(trytes.length);
-        for (final Tryte tryte : trytes) {
-
-            buffer.putInt((int)tryte.getValue());
-            buffer.putShort((short)(tryte.getValue() >> 32));
-        }
+        buffer.putInt(bytes.length);
+        buffer.put(bytes);
         buffer.flip();
 
         try {
@@ -279,20 +275,11 @@ public class FileStorage implements Storage {
                 return null;
             }
 
-            buffer = ByteBuffer.allocate(size * TRYTE_SIZE);
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            buffer = ByteBuffer.allocate(size);
 
             channel.read(buffer);
 
-            buffer.flip();
-            final Tryte[] trytes = new Tryte[size];
-            int index = 0;
-            while (buffer.hasRemaining()) {
-
-                trytes[index++] = new Tryte((buffer.getInt() & 0xFFFFFFFFL) | ((buffer.getShort() & 0xFFFFL) << 32));
-            }
-
-            return trytes;
+            return Converter.getTrytes(buffer.array()); // TODO: Rewrite (not guaranteed to work)
 
         } catch (final IOException e) {
 
