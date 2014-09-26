@@ -1,5 +1,6 @@
-package cfb.jiniri.hardware;
+package cfb.jiniri.hardware.impl;
 
+import cfb.jiniri.hardware.Terminal;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Multiplet;
 import cfb.jiniri.type.Nonet;
