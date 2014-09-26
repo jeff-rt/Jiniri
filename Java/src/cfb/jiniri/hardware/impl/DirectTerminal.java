@@ -1,29 +1,32 @@
 package cfb.jiniri.hardware.impl;
 
+import cfb.jiniri.hardware.Antiterminal;
 import cfb.jiniri.hardware.Terminal;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Multiplet;
 import cfb.jiniri.type.Nonet;
+import cfb.jiniri.util.Converter;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
-public class DirectTerminal implements Terminal {
+public class DirectTerminal implements Terminal, Antiterminal {
 
-    private final AtomicInteger operatorCounter;
+    private final Set<Multiplet> listenedChannelIds;
 
-    private final Map<Multiplet, Map<Integer, Queue<Tryte[]>>> outgoingMessages;
+    private final Map<Multiplet, Queue<Tryte[]>> outgoingMessages;
     private final Map<Multiplet, Queue<Tryte[]>> incomingMessages;
 
     public DirectTerminal() {
 
-        operatorCounter = new AtomicInteger();
+        listenedChannelIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         outgoingMessages = new ConcurrentHashMap<>();
         incomingMessages = new ConcurrentHashMap<>();
@@ -33,7 +36,7 @@ public class DirectTerminal implements Terminal {
     public void join(final Tryte[] channel) {
 
         final Multiplet channelId = new Nonet(channel);
-        if (outgoingMessages.putIfAbsent(channelId, new ConcurrentHashMap<>()) != null) {
+        if (outgoingMessages.putIfAbsent(channelId, new ConcurrentLinkedQueue<>()) != null) {
 
             throw new RuntimeException("Already joined channel: " + channelId);
         }
@@ -49,21 +52,23 @@ public class DirectTerminal implements Terminal {
             throw new RuntimeException("Non-joined channel: " + channelId);
         }
         incomingMessages.remove(channelId);
+
+        listenedChannelIds.remove(channelId);
     }
 
     @Override
     public void send(final Tryte[] channel, final Tryte[] message) {
 
         final Multiplet channelId = new Nonet(channel);
-        final Map<Integer, Queue<Tryte[]>> outgoingMessages = this.outgoingMessages.get(channelId);
+        final Queue<Tryte[]> outgoingMessages = this.outgoingMessages.get(channelId);
         if (outgoingMessages == null) {
 
             throw new RuntimeException("Non-joined channel: " + channelId);
         }
 
-        for (final Queue<Tryte[]> messageQueue : outgoingMessages.values()) {
+        if (listenedChannelIds.contains(channelId)) {
 
-            messageQueue.offer(message);
+            outgoingMessages.offer(message);
         }
     }
 
@@ -71,51 +76,88 @@ public class DirectTerminal implements Terminal {
     public Tryte[] receive(final Tryte[] channel) {
 
         final Multiplet channelId = new Nonet(channel);
-        final Queue<Tryte[]> messageQueue = incomingMessages.get(channelId);
-        if (messageQueue == null) {
+        final Queue<Tryte[]> incomingMessages = this.incomingMessages.get(channelId);
+        if (incomingMessages == null) {
 
             throw new RuntimeException("Non-joined channel: " + channelId);
         }
 
-        return messageQueue.poll();
+        return incomingMessages.poll();
     }
 
-    public int getOperatorId() {
+    @Override
+    public void join(final byte[] channel) {
 
-        return operatorCounter.getAndIncrement();
-    }
+        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        if (outgoingMessages.containsKey(channelId)) {
 
-    public void push(final Tryte[] channel, final Tryte[] message) {
+            if (!listenedChannelIds.add(channelId)) {
 
-        final Multiplet channelId = new Nonet(channel);
-        final Queue<Tryte[]> messageQueue = incomingMessages.get(channelId);
-        if (messageQueue == null) {
-
-            throw new RuntimeException("Non-existent channel: " + channelId);
-        }
-
-        messageQueue.offer(message);
-    }
-
-    public Tryte[] pull(final Tryte[] channel, final int operatorId) {
-
-        final Multiplet channelId = new Nonet(channel);
-        final Map<Integer, Queue<Tryte[]>> outgoingMessages = this.outgoingMessages.get(channelId);
-        if (outgoingMessages == null) {
-
-            throw new RuntimeException("Non-existent channel: " + channelId);
-        }
-
-        final Queue<Tryte[]> messageQueue = outgoingMessages.get(operatorId);
-        if (messageQueue == null) {
-
-            outgoingMessages.put(operatorId, new ConcurrentLinkedQueue<>());
-
-            return null;
+                throw new RuntimeException("Already joined channel: " + channelId);
+            }
 
         } else {
 
-            return messageQueue.poll();
+            throw new RuntimeException("Non-existent channel: " + channelId);
+        }
+    }
+
+    @Override
+    public void leave(final byte[] channel) {
+
+        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        if (outgoingMessages.containsKey(channelId)) {
+
+            if (!listenedChannelIds.remove(channelId)) {
+
+                throw new RuntimeException("Non-joined channel: " + channelId);
+            }
+
+        } else {
+
+            throw new RuntimeException("Non-existent channel: " + channelId);
+        }
+    }
+
+    @Override
+    public void send(final byte[] channel, final byte[] message) {
+
+        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        final Queue<Tryte[]> incomingMessages = this.incomingMessages.get(channelId);
+        if (incomingMessages == null) {
+
+            throw new RuntimeException("Non-existent channel: " + channelId);
+
+        }
+
+        if (listenedChannelIds.contains(channelId)) {
+
+            incomingMessages.offer(Converter.getTrytes(message));
+
+        } else {
+
+            throw new RuntimeException("Non-joined channel: " + channelId);
+        }
+    }
+
+    @Override
+    public byte[] receive(final byte[] channel) {
+
+        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        final Queue<Tryte[]> outgoingMessages = this.outgoingMessages.get(channelId);
+        if (outgoingMessages == null) {
+
+            throw new RuntimeException("Non-existent channel: " + channelId);
+
+        }
+
+        if (listenedChannelIds.contains(channelId)) {
+
+            return Converter.getBytes(outgoingMessages.poll());
+
+        } else {
+
+            throw new RuntimeException("Non-joined channel: " + channelId);
         }
     }
 }

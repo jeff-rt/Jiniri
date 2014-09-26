@@ -14,6 +14,11 @@ public class Converter {
 
     public static byte[] getBytes(final Tryte[] trytes) {
 
+        if (trytes == null) {
+
+            return null;
+        }
+
         final ByteBuffer buffer = ByteBuffer.allocate(trytes.length * TRYTE_SIZE);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         for (final Tryte tryte : trytes) {
@@ -26,6 +31,11 @@ public class Converter {
     }
 
     public static Tryte[] getTrytes(final byte[] bytes) {
+
+        if (bytes == null) {
+
+            return null;
+        }
 
         if (bytes.length % TRYTE_SIZE != 0) {
 
