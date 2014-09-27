@@ -11,9 +11,9 @@ public class Tryte {
     public static final long ZERO_VALUE = 0L;
     public static final long PLUS_ONE_VALUE = 1L;
 
-    public static final Tryte MINUS_ONE = new Tryte(MINUS_ONE_VALUE);
-    public static final Tryte ZERO = new Tryte(ZERO_VALUE);
-    public static final Tryte PLUS_ONE = new Tryte(PLUS_ONE_VALUE);
+    public static final Tryte MINUS_ONE;
+    public static final Tryte ZERO;
+    public static final Tryte PLUS_ONE;
 
     public static final long MIN_VALUE;
     public static final long MAX_VALUE;
@@ -34,6 +34,10 @@ public class Tryte {
 
         MAX_VALUE = (COEFFICIENTS[COEFFICIENTS.length - 1] - 1) / 2;
         MIN_VALUE = -MAX_VALUE;
+
+        MINUS_ONE = new Tryte(MINUS_ONE_VALUE);
+        ZERO = new Tryte(ZERO_VALUE);
+        PLUS_ONE = new Tryte(PLUS_ONE_VALUE);
 
         NUMBER_OF_VALUES = MAX_VALUE - MIN_VALUE + 1;
 

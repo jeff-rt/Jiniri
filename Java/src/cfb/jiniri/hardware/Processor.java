@@ -5,7 +5,7 @@ import cfb.jiniri.model.Entity;
 import cfb.jiniri.model.Environment;
 import cfb.jiniri.model.Singularity;
 import cfb.jiniri.ternary.Tryte;
-import cfb.jiniri.type.Multiplet;
+import cfb.jiniri.type.Nonet;
 import cfb.jiniri.type.Singlet;
 
 import java.util.Map;
@@ -16,19 +16,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Processor {
 
-    private final Multiplet id;
+    private final Singlet id;
 
     private final Core[] cores;
 
     private final Singlet time;
 
-    private final Map<Multiplet, Entity> entities;
-    private final Map<Multiplet, Environment> environments;
-    private final Map<Multiplet, Effect> effects;
+    private final Map<Nonet, Entity> entities;
+    private final Map<Nonet, Environment> environments;
+    private final Map<Nonet, Effect> effects;
 
-    public Processor(final Multiplet id, final int numberOfCores, final int coreMemoryCapacity, final Singlet time) {
+    public Processor(final long id, final int numberOfCores, final int coreMemoryCapacity) {
 
-        this.id = id.clone();
+        this.id = new Singlet(new Tryte(id));
 
         cores = new Core[numberOfCores];
         for (int i = 0; i < cores.length; i++) {
@@ -36,7 +36,7 @@ public class Processor {
             cores[i] = new Core(coreMemoryCapacity);
         }
 
-        this.time = (Singlet)time.clone();
+        time = new Singlet();
 
         entities = new ConcurrentHashMap<>();
         environments = new ConcurrentHashMap<>();

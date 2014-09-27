@@ -12,17 +12,17 @@ public class Core {
 
     private Entity entity;
 
-    public Core(final int memoryCapacity) {
+    protected Core(final int memoryCapacity) {
 
         this.memoryCapacity = memoryCapacity;
     }
 
-    public void deploy(final Entity entity) {
+    protected void deploy(final Entity entity) {
 
         this.entity = entity;
     }
 
-    public void react(final Effect[] effects) {
+    protected void react(final Effect[] effects) {
 
         for (final Effect effect : effects) {
 
