@@ -7,7 +7,7 @@ import cfb.jiniri.ternary.Tryte;
  */
 public class Triplet extends Multiplet {
 
-    private static final int WIDTH = 3;
+    public static final int WIDTH = 3;
 
     public static final Triplet ZERO = new Triplet(Tryte.ZERO);
 

@@ -7,7 +7,7 @@ import cfb.jiniri.ternary.Tryte;
  */
 public class Singlet extends Multiplet {
 
-    private static final int WIDTH = 1;
+    public static final int WIDTH = 1;
 
     public static final Singlet ZERO = new Singlet(Tryte.ZERO);
 
@@ -36,5 +36,15 @@ public class Singlet extends Multiplet {
     public Singlet(final Tryte... trytes) {
 
         this(trytes, 0);
+    }
+
+    public Tryte get() {
+
+        return trytes[0];
+    }
+
+    public void set(final Tryte tryte) {
+
+        trytes[0] = tryte;
     }
 }

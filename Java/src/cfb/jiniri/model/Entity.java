@@ -1,6 +1,8 @@
 package cfb.jiniri.model;
 
+import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Multiplet;
+import cfb.jiniri.type.Nonet;
 import cfb.jiniri.type.Singlet;
 
 /**
@@ -8,18 +10,18 @@ import cfb.jiniri.type.Singlet;
  */
 public abstract class Entity {
 
-    protected final Multiplet id;
+    protected final Nonet id;
 
     protected final Multiplet[] state;
 
-    protected Entity(final Multiplet id, final Multiplet[] state) {
+    protected Entity(final Nonet id, final Multiplet[] state) {
 
         if (state.length < 1) {
 
             throw new IllegalArgumentException("No state");
         }
 
-        this.id = id.clone();
+        this.id = (Nonet)id.clone();
 
         this.state = new Multiplet[state.length];
         for (int i = 0; i < this.state.length; i++) {
@@ -28,7 +30,7 @@ public abstract class Entity {
         }
     }
 
-    public Multiplet getId() {
+    public Nonet getId() {
 
         return id;
     }
@@ -48,6 +50,8 @@ public abstract class Entity {
 
         return size;
     }
+
+    public abstract Tryte[] getTrytes();
 
     public abstract void react(final Singlet[] effectData, final int scratchpadSize);
 

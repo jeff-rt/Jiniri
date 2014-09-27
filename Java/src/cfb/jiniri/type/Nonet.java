@@ -7,7 +7,7 @@ import cfb.jiniri.ternary.Tryte;
  */
 public class Nonet extends Multiplet {
 
-    private static final int WIDTH = 9;
+    public static final int WIDTH = 9;
 
     public static final Nonet ZERO = new Nonet(Tryte.ZERO);
 
