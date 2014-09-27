@@ -9,6 +9,8 @@ public class Singlet extends Multiplet {
 
     private static final int WIDTH = 1;
 
+    public static final Singlet ZERO = new Singlet(Tryte.ZERO);
+
     public Singlet() {
 
         super(WIDTH);
@@ -16,7 +18,7 @@ public class Singlet extends Multiplet {
 
     public Singlet(final Tryte[] trytes, final int offset, final int length) {
 
-        super(WIDTH);
+        this();
 
         if (length < 1 || length > getWidth()) {
 

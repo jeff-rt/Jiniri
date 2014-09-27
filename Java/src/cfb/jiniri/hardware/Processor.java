@@ -12,9 +12,9 @@ public class Processor {
 
     private final Core[] cores;
 
-    private final Singlet tick;
+    private final Singlet time;
 
-    public Processor(final Multiplet id, final int numberOfCores, final int coreMemoryCapacity, final Singlet tick) {
+    public Processor(final Multiplet id, final int numberOfCores, final int coreMemoryCapacity, final Singlet time) {
 
         this.id = id.clone();
 
@@ -24,6 +24,6 @@ public class Processor {
             cores[i] = new Core(coreMemoryCapacity);
         }
 
-        this.tick = (Singlet)tick.clone();
+        this.time = (Singlet)time.clone();
     }
 }

@@ -9,6 +9,8 @@ public class Triplet extends Multiplet {
 
     private static final int WIDTH = 3;
 
+    public static final Triplet ZERO = new Triplet(Tryte.ZERO);
+
     public Triplet() {
 
         super(WIDTH);
@@ -16,7 +18,7 @@ public class Triplet extends Multiplet {
 
     public Triplet(final Tryte[] trytes, final int offset, final int length) {
 
-        super(WIDTH);
+        this();
 
         if (length < 1 || length > getWidth()) {
 

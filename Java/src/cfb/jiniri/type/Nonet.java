@@ -9,6 +9,8 @@ public class Nonet extends Multiplet {
 
     private static final int WIDTH = 9;
 
+    public static final Nonet ZERO = new Nonet(Tryte.ZERO);
+
     public Nonet() {
 
         super(WIDTH);
@@ -16,7 +18,7 @@ public class Nonet extends Multiplet {
 
     public Nonet(final Tryte[] trytes, final int offset, final int length) {
 
-        super(WIDTH);
+        this();
 
         if (length < 1 || length > getWidth()) {
 

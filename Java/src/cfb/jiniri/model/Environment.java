@@ -1,6 +1,7 @@
 package cfb.jiniri.model;
 
 import cfb.jiniri.type.Multiplet;
+import cfb.jiniri.type.Nonet;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,6 +10,8 @@ import java.util.Set;
  * (c) 2014 Come-from-Beyond
  */
 public class Environment {
+
+    public static final Multiplet TEMPORAL_ENVIRONMENT = Nonet.ZERO;
 
     private final Multiplet id;
 
