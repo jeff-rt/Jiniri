@@ -1,5 +1,6 @@
 package cfb.jiniri.model;
 
+import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Multiplet;
 
 /**
@@ -9,7 +10,7 @@ public interface Singularity {
 
     public Entity createUniverse();
 
-    public Multiplet[] getEntityTypes();
-
     public Entity createEntity(final Multiplet type);
+
+    public Entity restoreEntity(final Tryte[] trytes);
 }
