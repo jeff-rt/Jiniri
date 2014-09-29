@@ -12,15 +12,15 @@ public class Functions {
     public static final Trit TRIPLET_TRIT = Trit.TRUE;
     public static final Trit NONET_TRIT = Trit.FALSE;
 
-    public static final Trit[] LIT_TRITS = {Trit.UNKNOWN, Trit.UNKNOWN};
-    public static final Trit[] CMP_TRITS = {Trit.TRUE, Trit.UNKNOWN};
-    public static final Trit[] ADD_TRITS = {Trit.FALSE, Trit.UNKNOWN};
-    public static final Trit[] MUL_TRITS = {Trit.UNKNOWN, Trit.TRUE};
-    public static final Trit[] DIV_TRITS = {Trit.TRUE, Trit.TRUE};
-    public static final Trit[] MOD_TRITS = {Trit.FALSE, Trit.TRUE};
-    public static final Trit[] NOT_TRITS = {Trit.UNKNOWN, Trit.FALSE};
-    public static final Trit[] AND_TRITS = {Trit.TRUE, Trit.FALSE};
-    public static final Trit[] OR_TRITS = {Trit.FALSE, Trit.FALSE};
+    public static final Trit[] LIT_TRITS = {Trit.UNKNOWN, Trit.UNKNOWN, Trit.UNKNOWN};
+    public static final Trit[] CMP_TRITS = {Trit.TRUE, Trit.UNKNOWN, Trit.UNKNOWN};
+    public static final Trit[] ADD_TRITS = {Trit.FALSE, Trit.UNKNOWN, Trit.UNKNOWN};
+    public static final Trit[] MUL_TRITS = {Trit.UNKNOWN, Trit.TRUE, Trit.UNKNOWN};
+    public static final Trit[] DIV_TRITS = {Trit.TRUE, Trit.TRUE, Trit.UNKNOWN};
+    public static final Trit[] MOD_TRITS = {Trit.FALSE, Trit.TRUE, Trit.UNKNOWN};
+    public static final Trit[] NOT_TRITS = {Trit.UNKNOWN, Trit.FALSE, Trit.UNKNOWN};
+    public static final Trit[] AND_TRITS = {Trit.TRUE, Trit.FALSE, Trit.UNKNOWN};
+    public static final Trit[] OR_TRITS = {Trit.FALSE, Trit.FALSE, Trit.UNKNOWN};
 
     public static Multiplet lit(final Multiplet multiplet) {
 
