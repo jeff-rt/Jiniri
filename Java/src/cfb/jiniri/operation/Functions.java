@@ -8,19 +8,19 @@ import cfb.jiniri.type.Multiplet;
  */
 public class Functions {
 
-    public static final Trit SINGLET_TRIT = Trit.UNKNOWN;
-    public static final Trit TRIPLET_TRIT = Trit.TRUE;
-    public static final Trit NONET_TRIT = Trit.FALSE;
+    public static final Trit[] EXTENSION = {Trit.UNKNOWN, Trit.UNKNOWN}; // Not a function
+    public static final Trit[] LIT = {Trit.TRUE, Trit.UNKNOWN};
+    public static final Trit[] CMP = {Trit.FALSE, Trit.UNKNOWN};
+    public static final Trit[] ADD = {Trit.UNKNOWN, Trit.TRUE};
+    public static final Trit[] MUL = {Trit.TRUE, Trit.TRUE};
+    public static final Trit[] DIV = {Trit.FALSE, Trit.TRUE};
+    public static final Trit[] NOT = {Trit.UNKNOWN, Trit.FALSE};
+    public static final Trit[] AND = {Trit.TRUE, Trit.FALSE};
+    public static final Trit[] OR = {Trit.FALSE, Trit.FALSE};
 
-    public static final Trit[] LIT_TRITS = {Trit.UNKNOWN, Trit.UNKNOWN, Trit.UNKNOWN};
-    public static final Trit[] CMP_TRITS = {Trit.TRUE, Trit.UNKNOWN, Trit.UNKNOWN};
-    public static final Trit[] ADD_TRITS = {Trit.FALSE, Trit.UNKNOWN, Trit.UNKNOWN};
-    public static final Trit[] MUL_TRITS = {Trit.UNKNOWN, Trit.TRUE, Trit.UNKNOWN};
-    public static final Trit[] DIV_TRITS = {Trit.TRUE, Trit.TRUE, Trit.UNKNOWN};
-    public static final Trit[] MOD_TRITS = {Trit.FALSE, Trit.TRUE, Trit.UNKNOWN};
-    public static final Trit[] NOT_TRITS = {Trit.UNKNOWN, Trit.FALSE, Trit.UNKNOWN};
-    public static final Trit[] AND_TRITS = {Trit.TRUE, Trit.FALSE, Trit.UNKNOWN};
-    public static final Trit[] OR_TRITS = {Trit.FALSE, Trit.FALSE, Trit.UNKNOWN};
+    public static final Trit SINGLET = Trit.UNKNOWN;
+    public static final Trit TRIPLET = Trit.TRUE;
+    public static final Trit NONET = Trit.FALSE;
 
     public static Multiplet lit(final Multiplet multiplet) {
 
@@ -67,11 +67,6 @@ public class Functions {
     public static Multiplet div(final Multiplet multiplet1, final Multiplet multiplet2) {
 
         return multiplet1.clone().div(multiplet2);
-    }
-
-    public static Multiplet mod(final Multiplet multiplet1, final Multiplet multiplet2) {
-
-        return multiplet1.clone().mod(multiplet2);
     }
 
     public static Multiplet not(final Multiplet multiplet) {
