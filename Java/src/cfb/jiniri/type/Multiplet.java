@@ -10,6 +10,10 @@ import java.math.BigInteger;
  */
 public class Multiplet {
 
+    public static final int LESS = -1;
+    public static final int EQUAL = 0;
+    public static final int GREATER = 1;
+
     private static final BigInteger COEFFICIENT = BigInteger.valueOf(Trit.RADIX).pow(Tryte.NUMBER_OF_TRITS);
 
     protected final Tryte[] trytes;
@@ -156,6 +160,25 @@ public class Multiplet {
 
         // TODO: Implement after http://arxiv.org/ftp/arxiv/papers/1407/1407.3360.pdf reviewed
         throw new UnsupportedOperationException("Multiplet.mod(Multiplet) not implemented");
+    }
+
+    public int cmp(final Multiplet multiplet) {
+
+        validateWidth(multiplet);
+
+        for (int i = 0; i < getWidth(); i++) {
+
+            if (get(i).getValue() < multiplet.get(i).getValue()) {
+
+                return LESS;
+
+            } else if (get(i).getValue() > multiplet.get(i).getValue()) {
+
+                return GREATER;
+            }
+        }
+
+        return EQUAL;
     }
 
     public boolean isZero() {
