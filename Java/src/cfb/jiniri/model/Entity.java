@@ -1,5 +1,6 @@
 package cfb.jiniri.model;
 
+import cfb.jiniri.operation.Conductor;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Multiplet;
 import cfb.jiniri.type.Nonet;
@@ -53,9 +54,5 @@ public abstract class Entity {
 
     public abstract Tryte[] getTrytes();
 
-    public abstract void react(final Singlet[] effectData, final int scratchpadSize);
-
-    public abstract Singlet[] getEffectData();
-
-    public abstract Singlet[] getScratchpad();
+    public abstract void react(final Singlet[] effectData, final Singlet[] scratchpad, final Conductor conductor);
 }

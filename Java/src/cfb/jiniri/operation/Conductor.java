@@ -8,8 +8,6 @@ import cfb.jiniri.type.Singlet;
  */
 public interface Conductor {
 
-    public void halt();
-
     public void create(final Nonet type, final Singlet pointer, final Singlet size);
 
     public void decay();

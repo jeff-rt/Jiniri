@@ -3,8 +3,10 @@ package cfb.jiniri.model;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Nonet;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * (c) 2014 Come-from-Beyond
@@ -26,7 +28,7 @@ public class Environment {
 
     public Environment(final Nonet id) {
 
-        this(id, new HashSet<>());
+        this(id, Collections.newSetFromMap(new ConcurrentHashMap<>()));
     }
 
     public static Environment getEnvironment(final Tryte[] trytes) {
@@ -53,17 +55,22 @@ public class Environment {
         return id;
     }
 
-    synchronized public boolean include(final Nonet entityId) {
+    public Set<Nonet> getEntityIds() {
+
+        return entityIds;
+    }
+
+    public boolean include(final Nonet entityId) {
 
         return entityIds.add(entityId);
     }
 
-    synchronized public boolean exclude(final Nonet entityId) {
+    public boolean exclude(final Nonet entityId) {
 
         return entityIds.remove(entityId);
     }
 
-    synchronized public boolean contains(final Nonet entityId) {
+    public boolean contains(final Nonet entityId) {
 
         return entityIds.contains(entityId);
     }

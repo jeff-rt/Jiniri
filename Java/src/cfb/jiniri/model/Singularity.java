@@ -1,16 +1,16 @@
 package cfb.jiniri.model;
 
 import cfb.jiniri.ternary.Tryte;
-import cfb.jiniri.type.Multiplet;
+import cfb.jiniri.type.Nonet;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
 public interface Singularity {
 
-    public Entity createUniverse();
+    public Entity createUniverse(final Nonet id);
 
-    public Entity createEntity(final Multiplet type);
+    public Entity createEntity(final Nonet type, final Nonet id);
 
     public Entity restoreEntity(final Tryte[] trytes);
 }

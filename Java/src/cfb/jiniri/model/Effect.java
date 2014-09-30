@@ -7,7 +7,7 @@ import cfb.jiniri.type.Singlet;
 /**
  * (c) 2014 Come-from-Beyond
  */
-public class Effect {
+public class Effect implements Comparable<Effect> {
 
     private final Nonet id;
 
@@ -151,5 +151,22 @@ public class Effect {
         System.arraycopy(getDuration().getTrytes(), 0, trytes, i, getDuration().getWidth());
 
         return trytes;
+    }
+
+    @Override
+    public int compareTo(final Effect effect) {
+
+        if (getTime().get().getValue() + getDelay().get().getValue() < effect.getTime().get().getValue() + effect.getDelay().get().getValue()) {
+
+            return -1;
+
+        } else if (getTime().get().getValue() + getDelay().get().getValue() > effect.getTime().get().getValue() + effect.getDelay().get().getValue()) {
+
+            return 1;
+
+        } else {
+
+            return getId().cmp(effect.getId());
+        }
     }
 }
