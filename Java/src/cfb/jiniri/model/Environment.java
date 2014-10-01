@@ -60,32 +60,27 @@ public class Environment {
         return entityIds;
     }
 
-    public boolean include(final Nonet entityId) {
+    public void include(final Nonet entityId) {
 
-        return entityIds.add(entityId);
+        getEntityIds().add(entityId);
     }
 
-    public boolean exclude(final Nonet entityId) {
+    public void exclude(final Nonet entityId) {
 
-        return entityIds.remove(entityId);
-    }
-
-    public boolean contains(final Nonet entityId) {
-
-        return entityIds.contains(entityId);
+        getEntityIds().remove(entityId);
     }
 
     public Tryte[] getTrytes() {
 
-        final Tryte[] trytes = new Tryte[getId().getWidth() + 1 + entityIds.size() * Nonet.WIDTH];
+        final Tryte[] trytes = new Tryte[getId().getWidth() + 1 + getEntityIds().size() * Nonet.WIDTH];
         int i = 0;
 
         System.arraycopy(getId().getTrytes(), 0, trytes, i, getId().getWidth());
         i += getId().getWidth();
 
-        trytes[i] = new Tryte(entityIds.size());
+        trytes[i] = new Tryte(getEntityIds().size());
         i += 1;
-        for (final Nonet entityId : entityIds) {
+        for (final Nonet entityId : getEntityIds()) {
 
             System.arraycopy(entityId.getTrytes(), 0, trytes, i, entityId.getWidth());
             i += entityId.getWidth();

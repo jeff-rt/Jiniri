@@ -41,8 +41,6 @@ public class Processor {
         }
     }
 
-    private final Singlet id;
-
     private final BlockingQueue<Core> cores;
 
     private final Singlet time;
@@ -61,9 +59,7 @@ public class Processor {
     private boolean isShuttingDown;
     private Storage storage;
 
-    public Processor(final long id, final int numberOfCores, final int coreMemoryCapacity) {
-
-        this.id = new Singlet(new Tryte(id));
+    public Processor(final int numberOfCores, final int coreMemoryCapacity) {
 
         cores = new ArrayBlockingQueue<>(numberOfCores);
         for (int i = 0; i < numberOfCores; i++) {

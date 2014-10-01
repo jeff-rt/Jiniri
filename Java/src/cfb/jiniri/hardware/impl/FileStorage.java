@@ -280,7 +280,14 @@ public class FileStorage implements Storage {
 
             channel.read(buffer);
 
-            return Converter.getTrytes(buffer.array()); // TODO: Rewrite (not guaranteed to work)
+            buffer.flip();
+            final byte[] bytes = new byte[buffer.limit()];
+            for (int i = 0; i < bytes.length; i++) {
+
+                bytes[i] = buffer.get();
+            }
+
+            return Converter.getTrytes(bytes);
 
         } catch (final IOException e) {
 

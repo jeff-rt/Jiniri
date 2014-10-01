@@ -82,17 +82,6 @@ public class Trit {
         return getValue() < trit.getValue() ? trit : this;
     }
 
-    public Trit xor(final Trit trit) {
-
-        return getValue() == UNKNOWN_VALUE || trit.getValue() == UNKNOWN_VALUE ? UNKNOWN
-                : getValue() == trit.getValue() ? FALSE : TRUE;
-    }
-
-    public Trit neg() {
-
-        return not();
-    }
-
     public Trit add(final Trit trit) {
 
         final int value = getValue() + trit.getValue();
@@ -127,16 +116,6 @@ public class Trit {
         }
     }
 
-    public Trit sub(final Trit trit) {
-
-        return add(trit.neg());
-    }
-
-    public Trit subOverflow(final Trit trit) {
-
-        return addOverflow(trit.neg());
-    }
-
     public Trit mul(final Trit trit) {
 
         return getTrit((byte)(getValue() * trit.getValue()));
@@ -155,16 +134,6 @@ public class Trit {
         }
 
         return getTrit((byte)(getValue() / trit.getValue()));
-    }
-
-    public Trit mod(final Trit trit) {
-
-        if (trit.getValue() == ZERO_VALUE) {
-
-            throw new IllegalArgumentException("Modulo by zero");
-        }
-
-        return ZERO;
     }
 
     @Override

@@ -84,28 +84,6 @@ public class Multiplet {
         return this;
     }
 
-    public Multiplet xor(final Multiplet multiplet) {
-
-        validateWidth(multiplet);
-
-        for (int i = 0; i < getWidth(); i++) {
-
-            set(i, get(i).xor(multiplet.get(i)));
-        }
-
-        return this;
-    }
-
-    public Multiplet neg() {
-
-        for (int i = 0; i < getWidth(); i++) {
-
-            set(i, get(i).neg());
-        }
-
-        return this;
-    }
-
     public Multiplet add(final Multiplet multiplet) {
 
         validateWidth(multiplet);
@@ -121,11 +99,6 @@ public class Multiplet {
         }
 
         return this;
-    }
-
-    public Multiplet sub(final Multiplet multiplet) {
-
-        return add(multiplet.clone().neg());
     }
 
     public Multiplet mul(final Multiplet multiplet) {
@@ -147,19 +120,6 @@ public class Multiplet {
 
         // TODO: Implement after http://arxiv.org/ftp/arxiv/papers/1407/1407.3360.pdf reviewed
         throw new UnsupportedOperationException("Multiplet.div(Multiplet) not implemented");
-    }
-
-    public Multiplet mod(final Multiplet multiplet) {
-
-        validateWidth(multiplet);
-
-        if (multiplet.isZero()) {
-
-            throw new IllegalArgumentException("Modulo by zero");
-        }
-
-        // TODO: Implement after http://arxiv.org/ftp/arxiv/papers/1407/1407.3360.pdf reviewed
-        throw new UnsupportedOperationException("Multiplet.mod(Multiplet) not implemented");
     }
 
     public int cmp(final Multiplet multiplet) {

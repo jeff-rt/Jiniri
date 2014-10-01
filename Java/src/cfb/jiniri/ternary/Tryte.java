@@ -116,7 +116,7 @@ public class Tryte {
 
             for (int i = 0; i < trits.length; i++) {
 
-                trits[offset + i] = trits[offset + i].neg();
+                trits[offset + i] = trits[offset + i].not();
             }
         }
     }
@@ -164,23 +164,6 @@ public class Tryte {
         return new Tryte(trits1);
     }
 
-    public Tryte xor(final Tryte tryte) {
-
-        final Trit[] trits1 = getTrits();
-        final Trit[] trits2 = tryte.getTrits();
-        for (int i = 0; i < trits1.length; i++) {
-
-            trits1[i] = trits1[i].xor(trits2[i]);
-        }
-
-        return new Tryte(trits1);
-    }
-
-    public Tryte neg() {
-
-        return not();
-    }
-
     public Tryte add(final Tryte tryte) {
 
         final long value = getValue() + tryte.getValue();
@@ -213,16 +196,6 @@ public class Tryte {
 
             return ZERO;
         }
-    }
-
-    public Tryte sub(final Tryte tryte) {
-
-        return add(tryte.neg());
-    }
-
-    public Tryte subOverflow(final Tryte tryte) {
-
-        return addOverflow(tryte.neg());
     }
 
     public Tryte mul(final Tryte tryte) {
@@ -336,16 +309,6 @@ public class Tryte {
         }
 
         return new Tryte(getValue() / tryte.getValue());
-    }
-
-    public Tryte mod(final Tryte tryte) {
-
-        if (tryte.getValue() == ZERO_VALUE) {
-
-            throw new IllegalArgumentException("Modulo by zero");
-        }
-
-        return new Tryte(getValue() % tryte.getValue());
     }
 
     @Override
