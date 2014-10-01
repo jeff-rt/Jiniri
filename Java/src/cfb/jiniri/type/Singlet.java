@@ -9,7 +9,9 @@ public class Singlet extends Multiplet {
 
     public static final int WIDTH = 1;
 
+    public static final Singlet MINUS_ONE = new Singlet(Tryte.MINUS_ONE);
     public static final Singlet ZERO = new Singlet(Tryte.ZERO);
+    public static final Singlet PLUS_ONE = new Singlet(Tryte.PLUS_ONE);
 
     public Singlet() {
 

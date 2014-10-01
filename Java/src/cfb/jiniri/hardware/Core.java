@@ -38,6 +38,8 @@ public class Core implements Conductor {
             scratchpad = new Singlet[memoryCapacity - entity.getStateSize() - effect.getDataSize()];
             entity.react(effect.getData(), scratchpad, this);
         }
+
+        processor.salvage(this);
     }
 
     @Override

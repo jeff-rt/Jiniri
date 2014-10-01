@@ -9,7 +9,9 @@ public class Nonet extends Multiplet {
 
     public static final int WIDTH = 9;
 
+    public static final Nonet MINUS_ONE = new Nonet(Tryte.MINUS_ONE);
     public static final Nonet ZERO = new Nonet(Tryte.ZERO);
+    public static final Nonet PLUS_ONE = new Nonet(Tryte.PLUS_ONE);
 
     public Nonet() {
 

@@ -4,49 +4,46 @@ import cfb.jiniri.model.Effect;
 import cfb.jiniri.model.Entity;
 import cfb.jiniri.model.Environment;
 import cfb.jiniri.model.Singularity;
-import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Nonet;
 import cfb.jiniri.type.Singlet;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
 public class Processor {
 
-    private static final Trit AWAITING = Trit.FALSE;
-    private static final Trit FUNCTIONING = Trit.UNKNOWN;
-    private static final Trit DECAYING = Trit.TRUE;
+    private static final Singlet CREATION = Singlet.MINUS_ONE;
+    private static final Singlet EVOLUTION = Singlet.ZERO;
+    private static final Singlet DESTRUCTION = Singlet.PLUS_ONE;
 
     private static final class EntityEnvelope {
 
         final Entity entity;
 
-        Trit stage;
-
         final Set<Environment> environments;
         final SortedSet<Effect> effects;
 
-        EntityEnvelope(final Entity entity) {
+        EntityEnvelope(final Entity entity, final Singlet[] data) {
 
             this.entity = entity;
 
-            stage = AWAITING;
-
             environments = Collections.newSetFromMap(new ConcurrentHashMap<>());
             effects = new ConcurrentSkipListSet<>();
+
+            if (data != null) {
+
+                effects.add(new Effect(generateId(), data, null, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO));
+            }
         }
     }
 
     private final Singlet id;
 
-    private final Core[] cores;
+    private final BlockingQueue<Core> cores;
 
     private final Singlet time;
 
@@ -55,16 +52,23 @@ public class Processor {
     private final Map<Nonet, EntityEnvelope> entityEnvelopes;
     private final Map<Nonet, Environment> environments;
 
-    private final Queue<Nonet> decayingEntityIds;
+    private final ExecutorService processorExecutor;
+    private final ExecutorService coreExecutor;
+
+    private final Queue<Runnable> immediateCalls;
+    private final Queue<Runnable> deferredCalls;
+
+    private boolean isShuttingDown;
+    private Storage storage;
 
     public Processor(final long id, final int numberOfCores, final int coreMemoryCapacity) {
 
         this.id = new Singlet(new Tryte(id));
 
-        cores = new Core[numberOfCores];
-        for (int i = 0; i < cores.length; i++) {
+        cores = new ArrayBlockingQueue<>(numberOfCores);
+        for (int i = 0; i < numberOfCores; i++) {
 
-            cores[i] = new Core(this, coreMemoryCapacity);
+            cores.offer(new Core(this, coreMemoryCapacity));
         }
 
         time = new Singlet();
@@ -72,7 +76,11 @@ public class Processor {
         entityEnvelopes = new ConcurrentHashMap<>();
         environments = new ConcurrentHashMap<>();
 
-        decayingEntityIds = new ConcurrentLinkedQueue<>();
+        processorExecutor = Executors.newSingleThreadExecutor();
+        coreExecutor = Executors.newFixedThreadPool(numberOfCores);
+
+        immediateCalls = new ConcurrentLinkedQueue<>();
+        deferredCalls = new ConcurrentLinkedQueue<>();
     }
 
     public void launch(final Singularity singularity) {
@@ -83,26 +91,30 @@ public class Processor {
 
         entityEnvelopes.clear();
         final Entity universeEntity = singularity.createUniverse(generateId());
-        entityEnvelopes.put(universeEntity.getId(), new EntityEnvelope(universeEntity));
+        entityEnvelopes.put(universeEntity.getId(), new EntityEnvelope(universeEntity, new Singlet[0]));
 
         environments.clear();
         final Environment temporalEnvironment = new Environment(Environment.TEMPORAL_ENVIRONMENT_ID);
         environments.put(temporalEnvironment.getId(), temporalEnvironment);
+
+        start();
     }
 
     public void launch(final Singularity singularity, final Storage storage) {
 
         this.singularity = singularity;
-
         load(storage);
+
+        start();
     }
 
     public void shutDown(final Storage storage) {
 
-        store(storage);
+        this.storage = storage;
+        stop();
     }
 
-    private void store(final Storage storage) {
+    private void store() {
 
         storage.beginStoring(time.get());
 
@@ -139,7 +151,7 @@ public class Processor {
         while ((trytes = storage.loadEntity()) != null) {
 
             final Entity entity = singularity.restoreEntity(trytes);
-            entityEnvelopes.put(entity.getId(), new EntityEnvelope(entity));
+            entityEnvelopes.put(entity.getId(), new EntityEnvelope(entity, null));
         }
 
         while ((trytes = storage.loadEnvironment()) != null) {
@@ -163,67 +175,231 @@ public class Processor {
         }
     }
 
+    private void start() {
+
+        isShuttingDown = false;
+
+        processorExecutor.execute(() -> {
+
+            while (true) {
+
+                time.set(time.get().add(Tryte.PLUS_ONE));
+                final Environment temporalEnvironment = environments.get(Environment.TEMPORAL_ENVIRONMENT_ID);
+                final Effect temporalEffect = new Effect(generateId(), new Singlet[] {EVOLUTION, time},
+                        null, temporalEnvironment.getId(), Singlet.ZERO, Singlet.ZERO, Singlet.ZERO);
+                for (final Nonet entityId : temporalEnvironment.getEntityIds()) {
+
+                    entityEnvelopes.get(entityId).effects.add(temporalEffect);
+                }
+
+                for (final Runnable call : deferredCalls) {
+
+                    call.run();
+                }
+
+                if (isShuttingDown) {
+
+                    store();
+
+                    return;
+                }
+
+                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+
+                    if (entityEnvelope.entity.getStage().equals(Entity.EXISTING)
+                            && entityEnvelope.environments.isEmpty()) {
+
+                        entityEnvelope.entity.setStage(Entity.DECAYING);
+                    }
+                }
+
+                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+
+                    if (entityEnvelope.entity.getStage().equals(Entity.DECAYING)) {
+
+                        entityEnvelopes.remove(entityEnvelope.entity.getId());
+                        for (final Environment environment : entityEnvelope.environments) {
+
+                            environment.exclude(entityEnvelope.entity.getId());
+                        }
+
+                        final Singlet[] data = new Singlet[1 + Nonet.WIDTH];
+                        data[0] = DESTRUCTION;
+                        for (int i = 0; i < entityEnvelope.entity.getId().getWidth(); i++) {
+
+                            data[1 + i] = new Singlet(entityEnvelope.entity.getId().get(i));
+                        }
+
+                        process(entityEnvelope, new Effect(generateId(), data, null, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO));
+                    }
+                }
+
+                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+
+                    if (entityEnvelope.entity.getStage().equals(Entity.AWAITING)) {
+
+                        entityEnvelope.entity.setStage(Entity.EXISTING);
+
+                        final Singlet[] data = new Singlet[1 + Nonet.WIDTH];
+                        data[0] = CREATION;
+                        for (int i = 0; i < entityEnvelope.entity.getId().getWidth(); i++) {
+
+                            data[1 + i] = new Singlet(entityEnvelope.entity.getId().get(i));
+                        }
+
+                        process(entityEnvelope, new Effect(generateId(), data, null, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO));
+                    }
+                }
+
+                do {
+
+                    for (final Runnable call : immediateCalls) {
+
+                        call.run();
+                    }
+
+                    for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+
+                        if (entityEnvelope.entity.getStage().equals(Entity.EXISTING)) {
+
+                            final List<Effect> effects = new LinkedList<>();
+                            try {
+
+                                while (true) {
+
+                                    final Effect effect = entityEnvelope.effects.first();
+                                    if (effect.getTime().get().getValue() + effect.getDelay().get().getValue() <= time.get().getValue()) {
+
+                                        effects.add(effect);
+                                        entityEnvelope.effects.remove(effect);
+                                    }
+                                }
+
+                            } catch (final NoSuchElementException e) {
+                            }
+
+                            if (effects.size() > 0) {
+
+                                process(entityEnvelope, effects.toArray(new Effect[effects.size()]));
+                            }
+                        }
+                    }
+
+                } while (!immediateCalls.isEmpty());
+            }
+        });
+    }
+
+    private void stop() {
+
+        isShuttingDown = true;
+    }
+
+    private void process(final EntityEnvelope entityEnvelope, final Effect... effects) {
+
+        try {
+
+            final Core core = cores.take();
+            coreExecutor.execute(() -> {
+
+                core.deploy(entityEnvelope.entity);
+                core.react(effects);
+            });
+
+        } catch (final InterruptedException e) {
+
+            e.printStackTrace();
+        }
+    }
+
+    void salvage(final Core core) {
+
+        try {
+
+            cores.put(core);
+
+        } catch (final InterruptedException e) {
+
+            e.printStackTrace();
+        }
+    }
+
     void create(final Nonet type, final Singlet[] data) {
 
-        final Entity entity = singularity.createEntity(type, generateId());
-        entityEnvelopes.put(entity.getId(), new EntityEnvelope(entity));
+        deferredCalls.offer(() -> {
+
+            final Entity entity = singularity.createEntity(type, generateId());
+            entityEnvelopes.put(entity.getId(), new EntityEnvelope(entity, data));
+        });
     }
 
     void destroy(final Nonet entityId) {
 
-        entityEnvelopes.get(entityId).stage = DECAYING;
+        deferredCalls.offer(() -> {
+
+            entityEnvelopes.get(entityId).entity.setStage(Entity.DECAYING);
+        });
     }
 
     void affect(final Singlet[] data, final Nonet entityId, final Nonet environmentId,
                 final Singlet delay, final Singlet duration) {
 
-        final Environment environment = environments.get(environmentId);
-        if (environment != null) {
+        (delay.get().getValue() == Tryte.ZERO_VALUE ? immediateCalls : deferredCalls).offer(() -> {
 
-            final Effect effect = new Effect(generateId(), data, entityId, environmentId, time, delay, duration);
-            for (final Nonet affectedEntityId : environment.getEntityIds()) {
+            final Environment environment = environments.get(environmentId);
+            if (environment != null) {
 
-                entityEnvelopes.get(affectedEntityId).effects.add(effect);
+                final Effect effect = new Effect(generateId(), data, entityId, environmentId, time, delay, duration);
+                for (final Nonet affectedEntityId : environment.getEntityIds()) {
+
+                    entityEnvelopes.get(affectedEntityId).effects.add(effect);
+                }
             }
-        }
+        });
     }
 
     void include(final Nonet entityId, final Nonet environmentId) {
 
-        Environment environment;
-        synchronized (environments) {
+        deferredCalls.offer(() -> {
 
-            environment = environments.get(environmentId);
-            if (environment == null) {
+            Environment environment;
+            synchronized (environments) {
 
-                environment = new Environment(environmentId);
-                environments.put(environment.getId(), environment);
+                environment = environments.get(environmentId);
+                if (environment == null) {
+
+                    environment = new Environment(environmentId);
+                    environments.put(environment.getId(), environment);
+                }
+                environment.include(entityId);
             }
-            environment.include(entityId);
-        }
 
-        entityEnvelopes.get(entityId).environments.add(environment);
+            entityEnvelopes.get(entityId).environments.add(environment);
+        });
     }
 
     void exclude(final Nonet entityId, final Nonet environmentId) {
 
-        final Environment environment = environments.get(environmentId);
-        if (environment != null) {
+        deferredCalls.offer(() -> {
 
-            synchronized (environments) {
+            final Environment environment = environments.get(environmentId);
+            if (environment != null) {
 
-                environment.exclude(entityId);
-                if (environment.getEntityIds().isEmpty()) {
+                synchronized (environments) {
 
-                    environments.remove(environmentId);
+                    environment.exclude(entityId);
+                    if (environment.getEntityIds().isEmpty()) {
+
+                        environments.remove(environmentId);
+                    }
                 }
-            }
 
-            entityEnvelopes.get(entityId).environments.remove(environment);
-        }
+                entityEnvelopes.get(entityId).environments.remove(environment);
+            }
+        });
     }
 
-    private Nonet generateId() {
+    private static Nonet generateId() {
 
         final Nonet id = new Nonet();
         for (int i = 0; i < id.getWidth(); i++) {

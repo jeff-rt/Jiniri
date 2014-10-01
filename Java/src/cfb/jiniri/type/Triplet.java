@@ -9,7 +9,9 @@ public class Triplet extends Multiplet {
 
     public static final int WIDTH = 3;
 
+    public static final Triplet MINUS_ONE = new Triplet(Tryte.MINUS_ONE);
     public static final Triplet ZERO = new Triplet(Tryte.ZERO);
+    public static final Triplet PLUS_ONE = new Triplet(Tryte.PLUS_ONE);
 
     public Triplet() {
 

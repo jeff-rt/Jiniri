@@ -1,6 +1,7 @@
 package cfb.jiniri.model;
 
 import cfb.jiniri.operation.Conductor;
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Multiplet;
 import cfb.jiniri.type.Nonet;
@@ -11,9 +12,15 @@ import cfb.jiniri.type.Singlet;
  */
 public abstract class Entity {
 
+    public static final Trit AWAITING = Trit.FALSE;
+    public static final Trit EXISTING = Trit.UNKNOWN;
+    public static final Trit DECAYING = Trit.TRUE;
+
     protected final Nonet id;
 
     protected final Multiplet[] state;
+
+    protected Trit stage;
 
     protected Entity(final Nonet id, final Multiplet[] state) {
 
@@ -29,6 +36,8 @@ public abstract class Entity {
 
             this.state[i] = state[i].clone();
         }
+
+        setStage(AWAITING);
     }
 
     public Nonet getId() {
@@ -39,6 +48,16 @@ public abstract class Entity {
     public Multiplet[] getState() {
 
         return state;
+    }
+
+    public Trit getStage() {
+
+        return stage;
+    }
+
+    public void setStage(final Trit stage) {
+
+        this.stage = stage;
     }
 
     public int getStateSize() {
