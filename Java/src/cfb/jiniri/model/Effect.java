@@ -9,11 +9,11 @@ import cfb.jiniri.type.Singlet;
  */
 public class Effect implements Comparable<Effect> {
 
+    public static final Nonet VIRTUAL_EFFECT_ID = Nonet.ZERO;
+
     private final Nonet id;
 
     private final Singlet[] data;
-
-    private final Nonet entityId;
 
     private final Nonet environmentId;
 
@@ -21,13 +21,8 @@ public class Effect implements Comparable<Effect> {
     private final Singlet delay;
     private final Singlet duration;
 
-    public Effect(final Nonet id, final Singlet[] data, final Nonet entityId, final Nonet environmentId,
+    public Effect(final Nonet id, final Singlet[] data, final Nonet environmentId,
                   final Singlet time, final Singlet delay, final Singlet duration) {
-
-        if (data.length < 1) {
-
-            throw new IllegalArgumentException("No data");
-        }
 
         this.id = (Nonet)id.clone();
 
@@ -37,13 +32,16 @@ public class Effect implements Comparable<Effect> {
             this.data[i] = (Singlet)data[i].clone();
         }
 
-        this.entityId = (Nonet)entityId.clone();
-
         this.environmentId = (Nonet)environmentId.clone();
 
         this.time = (Singlet)time.clone();
         this.delay = (Singlet)delay.clone();
         this.duration = (Singlet)duration.clone();
+    }
+
+    public Effect(final Singlet[] data) {
+
+        this(VIRTUAL_EFFECT_ID, data, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO);
     }
 
     public static Effect getEffect(final Tryte[] trytes) {
@@ -61,9 +59,6 @@ public class Effect implements Comparable<Effect> {
             i += Singlet.WIDTH;
         }
 
-        final Nonet entityId = new Nonet(trytes, i, Nonet.WIDTH);
-        i += Nonet.WIDTH;
-
         final Nonet environmentId = new Nonet(trytes, i, Nonet.WIDTH);
         i += Nonet.WIDTH;
 
@@ -75,7 +70,7 @@ public class Effect implements Comparable<Effect> {
 
         final Singlet duration = new Singlet(trytes, i, Singlet.WIDTH);
 
-        return new Effect(id, data, entityId, environmentId, time, delay, duration);
+        return new Effect(id, data, environmentId, time, delay, duration);
     }
 
     public Nonet getId() {
@@ -91,11 +86,6 @@ public class Effect implements Comparable<Effect> {
     public int getDataSize() {
 
         return getData()[0].getWidth() * getData().length;
-    }
-
-    public Nonet getEntityId() {
-
-        return entityId;
     }
 
     public Nonet getEnvironmentId() {
@@ -121,7 +111,7 @@ public class Effect implements Comparable<Effect> {
     public Tryte[] getTrytes() {
 
         final Tryte[] trytes = new Tryte[getId().getWidth() + 1 + getDataSize()
-                + getEntityId().getWidth() + getEnvironmentId().getWidth()
+                + getEnvironmentId().getWidth()
                 + getTime().getWidth() + getDelay().getWidth() + getDuration().getWidth()];
         int i = 0;
 
@@ -135,9 +125,6 @@ public class Effect implements Comparable<Effect> {
             System.arraycopy(getData()[j].getTrytes(), 0, trytes, i, getData()[j].getWidth());
             i += getData()[j].getWidth();
         }
-
-        System.arraycopy(getEntityId().getTrytes(), 0, trytes, i, getEntityId().getWidth());
-        i += getEntityId().getWidth();
 
         System.arraycopy(getEnvironmentId().getTrytes(), 0, trytes, i, getEnvironmentId().getWidth());
         i += getEnvironmentId().getWidth();

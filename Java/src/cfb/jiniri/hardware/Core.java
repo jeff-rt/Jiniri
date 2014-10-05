@@ -61,7 +61,7 @@ public class Core implements Conductor {
     }
 
     @Override
-    public void affect(final Nonet environmentId, final Singlet delay, final Singlet duration,
+    public void affect(final Nonet environmentId, final Singlet delay, final Singlet duration, final Singlet power,
                        final Singlet pointer, final Singlet size) {
 
         final Singlet[] data = new Singlet[(int)size.get().getValue()];
@@ -70,7 +70,7 @@ public class Core implements Conductor {
             data[i] = (Singlet)scratchpad[((int)pointer.get().getValue()) + i].clone();
         }
 
-        processor.affect(data, entity.getId(), environmentId, delay, duration);
+        processor.affect(data, environmentId, delay, duration, power);
     }
 
     @Override

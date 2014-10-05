@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Environment {
 
-    public static final Nonet TEMPORAL_ENVIRONMENT_ID = Nonet.ZERO;
+    public static final Nonet BORDER_ENVIRONMENT_ID = Nonet.ZERO;
 
     private final Nonet id;
 

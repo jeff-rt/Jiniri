@@ -12,7 +12,7 @@ public interface Conductor {
 
     public void decay();
 
-    public void affect(final Nonet environmentId, final Singlet delay, final Singlet duration,
+    public void affect(final Nonet environmentId, final Singlet delay, final Singlet duration, final Singlet power,
                        final Singlet pointer, final Singlet size);
 
     public void join(final Nonet environmentId);

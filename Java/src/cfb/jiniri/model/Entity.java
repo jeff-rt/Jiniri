@@ -12,6 +12,8 @@ import cfb.jiniri.type.Singlet;
  */
 public abstract class Entity {
 
+    public static final Nonet SEED_ENTITY_TYPE = Nonet.ZERO;
+
     public static final Trit AWAITING = Trit.FALSE;
     public static final Trit EXISTING = Trit.UNKNOWN;
     public static final Trit DECAYING = Trit.TRUE;

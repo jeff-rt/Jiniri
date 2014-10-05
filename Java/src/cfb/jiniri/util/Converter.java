@@ -1,9 +1,8 @@
 package cfb.jiniri.util;
 
 import cfb.jiniri.ternary.Tryte;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import cfb.jiniri.type.Multiplet;
+import cfb.jiniri.type.Singlet;
 
 /**
  * (c) 2014 Come-from-Beyond
@@ -65,5 +64,27 @@ public class Converter {
         }
 
         return trytes;
+    }
+
+    public static Singlet[] combine(final Multiplet... multiplets) {
+
+        int size = 0;
+        for (final Multiplet multiplet : multiplets) {
+
+            size += multiplet.getWidth();
+        }
+
+        final Singlet[] singlets = new Singlet[size];
+        int i = 0;
+        for (final Multiplet multiplet : multiplets) {
+
+            final Tryte[] trytes = multiplet.getTrytes();
+            for (int j = 0; j < trytes.length; j++) {
+
+                singlets[i++] = new Singlet(trytes[j]);
+            }
+        }
+
+        return singlets;
     }
 }

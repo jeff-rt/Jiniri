@@ -7,6 +7,7 @@ import cfb.jiniri.model.Singularity;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.type.Nonet;
 import cfb.jiniri.type.Singlet;
+import cfb.jiniri.util.Converter;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -36,8 +37,13 @@ public class Processor {
 
             if (data != null) {
 
-                effects.add(new Effect(generateId(), data, null, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO));
+                effects.add(new Effect(data));
             }
+        }
+
+        EntityEnvelope(final Entity entity) {
+
+            this(entity, null);
         }
     }
 
@@ -86,12 +92,12 @@ public class Processor {
         this.singularity = singularity;
 
         entityEnvelopes.clear();
-        final Entity universeEntity = singularity.createUniverse(generateId());
-        entityEnvelopes.put(universeEntity.getId(), new EntityEnvelope(universeEntity, new Singlet[0]));
+        final Entity seedEntity = singularity.createEntity(Entity.SEED_ENTITY_TYPE, generateId());
+        entityEnvelopes.put(seedEntity.getId(), new EntityEnvelope(seedEntity));
 
         environments.clear();
-        final Environment temporalEnvironment = new Environment(Environment.TEMPORAL_ENVIRONMENT_ID);
-        environments.put(temporalEnvironment.getId(), temporalEnvironment);
+        final Environment borderEnvironment = new Environment(Environment.BORDER_ENVIRONMENT_ID);
+        environments.put(borderEnvironment.getId(), borderEnvironment);
 
         start();
     }
@@ -147,7 +153,7 @@ public class Processor {
         while ((trytes = storage.loadEntity()) != null) {
 
             final Entity entity = singularity.restoreEntity(trytes);
-            entityEnvelopes.put(entity.getId(), new EntityEnvelope(entity, null));
+            entityEnvelopes.put(entity.getId(), new EntityEnvelope(entity));
         }
 
         while ((trytes = storage.loadEnvironment()) != null) {
@@ -179,27 +185,6 @@ public class Processor {
 
             while (true) {
 
-                time.set(time.get().add(Tryte.PLUS_ONE));
-                final Environment temporalEnvironment = environments.get(Environment.TEMPORAL_ENVIRONMENT_ID);
-                final Effect temporalEffect = new Effect(generateId(), new Singlet[] {EVOLUTION, time},
-                        null, temporalEnvironment.getId(), Singlet.ZERO, Singlet.ZERO, Singlet.ZERO);
-                for (final Nonet entityId : temporalEnvironment.getEntityIds()) {
-
-                    entityEnvelopes.get(entityId).effects.add(temporalEffect);
-                }
-
-                for (final Runnable call : deferredCalls) {
-
-                    call.run();
-                }
-
-                if (isShuttingDown) {
-
-                    store();
-
-                    return;
-                }
-
                 for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
 
                     if (entityEnvelope.entity.getStage().equals(Entity.EXISTING)
@@ -211,7 +196,13 @@ public class Processor {
 
                 for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
 
-                    if (entityEnvelope.entity.getStage().equals(Entity.DECAYING)) {
+                    if (entityEnvelope.entity.getStage().equals(Entity.AWAITING)) {
+
+                        entityEnvelope.entity.setStage(Entity.EXISTING);
+
+                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT_ID, CREATION, entityEnvelope.entity.getId())));
+
+                    } else if (entityEnvelope.entity.getStage().equals(Entity.DECAYING)) {
 
                         entityEnvelopes.remove(entityEnvelope.entity.getId());
                         for (final Environment environment : entityEnvelope.environments) {
@@ -219,32 +210,21 @@ public class Processor {
                             environment.exclude(entityEnvelope.entity.getId());
                         }
 
-                        final Singlet[] data = new Singlet[1 + Nonet.WIDTH];
-                        data[0] = DESTRUCTION;
-                        for (int i = 0; i < entityEnvelope.entity.getId().getWidth(); i++) {
-
-                            data[1 + i] = new Singlet(entityEnvelope.entity.getId().get(i));
-                        }
-
-                        process(entityEnvelope, new Effect(generateId(), data, null, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO));
+                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT_ID, DESTRUCTION, entityEnvelope.entity.getId())));
                     }
                 }
 
-                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+                time.set(time.get().add(Tryte.PLUS_ONE));
+                final Environment borderEnvironment = environments.get(Environment.BORDER_ENVIRONMENT_ID);
+                final Effect evolutionEffect = new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT_ID, EVOLUTION, time));
+                for (final Nonet entityId : borderEnvironment.getEntityIds()) {
 
-                    if (entityEnvelope.entity.getStage().equals(Entity.AWAITING)) {
+                    entityEnvelopes.get(entityId).effects.add(evolutionEffect);
+                }
 
-                        entityEnvelope.entity.setStage(Entity.EXISTING);
+                for (final Runnable call : deferredCalls) {
 
-                        final Singlet[] data = new Singlet[1 + Nonet.WIDTH];
-                        data[0] = CREATION;
-                        for (int i = 0; i < entityEnvelope.entity.getId().getWidth(); i++) {
-
-                            data[1 + i] = new Singlet(entityEnvelope.entity.getId().get(i));
-                        }
-
-                        process(entityEnvelope, new Effect(generateId(), data, null, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO));
-                    }
+                    call.run();
                 }
 
                 do {
@@ -252,6 +232,13 @@ public class Processor {
                     for (final Runnable call : immediateCalls) {
 
                         call.run();
+                    }
+
+                    if (isShuttingDown) {
+
+                        store();
+
+                        return;
                     }
 
                     for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
@@ -337,16 +324,22 @@ public class Processor {
         });
     }
 
-    void affect(final Singlet[] data, final Nonet entityId, final Nonet environmentId,
-                final Singlet delay, final Singlet duration) {
+    void affect(final Singlet[] data, final Nonet environmentId,
+                final Singlet delay, final Singlet duration, final Singlet power) {
 
         (delay.get().getValue() == Tryte.ZERO_VALUE ? immediateCalls : deferredCalls).offer(() -> {
 
             final Environment environment = environments.get(environmentId);
             if (environment != null) {
 
-                final Effect effect = new Effect(generateId(), data, entityId, environmentId, time, delay, duration);
+                final Effect effect = new Effect(generateId(), data, environmentId, time, delay, duration);
+                int numberOfAffectedEntities = 0;
                 for (final Nonet affectedEntityId : environment.getEntityIds()) {
+
+                    if (power.get().getValue() > 0 && ++numberOfAffectedEntities > power.get().getValue()) {
+
+                        break;
+                    }
 
                     entityEnvelopes.get(affectedEntityId).effects.add(effect);
                 }
