@@ -26,11 +26,6 @@ public abstract class Entity {
 
     protected Entity(final Nonet id, final Multiplet[] state) {
 
-        if (state.length < 1) {
-
-            throw new IllegalArgumentException("No state");
-        }
-
         this.id = (Nonet)id.clone();
 
         this.state = new Multiplet[state.length];
