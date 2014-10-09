@@ -17,12 +17,11 @@ public class Effect implements Comparable<Effect> {
 
     private final Nonet environmentId;
 
-    private final Singlet time;
-    private final Singlet delay;
-    private final Singlet duration;
+    private final Singlet earliestTime;
+    private final Singlet latestTime;
 
     public Effect(final Nonet id, final Singlet[] data, final Nonet environmentId,
-                  final Singlet time, final Singlet delay, final Singlet duration) {
+                  final Singlet earliestTime, final Singlet latestTime) {
 
         this.id = (Nonet)id.clone();
 
@@ -34,14 +33,13 @@ public class Effect implements Comparable<Effect> {
 
         this.environmentId = (Nonet)environmentId.clone();
 
-        this.time = (Singlet)time.clone();
-        this.delay = (Singlet)delay.clone();
-        this.duration = (Singlet)duration.clone();
+        this.earliestTime = (Singlet)earliestTime.clone();
+        this.latestTime = (Singlet)latestTime.clone();
     }
 
     public Effect(final Singlet[] data) {
 
-        this(VIRTUAL_EFFECT_ID, data, null, Singlet.ZERO, Singlet.ZERO, Singlet.ZERO);
+        this(VIRTUAL_EFFECT_ID, data, null, Singlet.ZERO, Singlet.ZERO);
     }
 
     public static Effect getEffect(final Tryte[] trytes) {
@@ -62,15 +60,12 @@ public class Effect implements Comparable<Effect> {
         final Nonet environmentId = new Nonet(trytes, i, Nonet.WIDTH);
         i += Nonet.WIDTH;
 
-        final Singlet time = new Singlet(trytes, i, Singlet.WIDTH);
+        final Singlet earliestTime = new Singlet(trytes, i, Singlet.WIDTH);
         i += Singlet.WIDTH;
 
-        final Singlet delay = new Singlet(trytes, i, Singlet.WIDTH);
-        i += Singlet.WIDTH;
+        final Singlet latestTime = new Singlet(trytes, i, Singlet.WIDTH);
 
-        final Singlet duration = new Singlet(trytes, i, Singlet.WIDTH);
-
-        return new Effect(id, data, environmentId, time, delay, duration);
+        return new Effect(id, data, environmentId, earliestTime, latestTime);
     }
 
     public Nonet getId() {
@@ -93,26 +88,20 @@ public class Effect implements Comparable<Effect> {
         return environmentId;
     }
 
-    public Singlet getTime() {
+    public Singlet getEarliestTime() {
 
-        return time;
+        return earliestTime;
     }
 
-    public Singlet getDelay() {
+    public Singlet getLatestTime() {
 
-        return delay;
-    }
-
-    public Singlet getDuration() {
-
-        return duration;
+        return latestTime;
     }
 
     public Tryte[] getTrytes() {
 
         final Tryte[] trytes = new Tryte[getId().getWidth() + 1 + getDataSize()
-                + getEnvironmentId().getWidth()
-                + getTime().getWidth() + getDelay().getWidth() + getDuration().getWidth()];
+                + getEnvironmentId().getWidth() + getEarliestTime().getWidth() + getLatestTime().getWidth()];
         int i = 0;
 
         System.arraycopy(getId().getTrytes(), 0, trytes, i, getId().getWidth());
@@ -129,13 +118,10 @@ public class Effect implements Comparable<Effect> {
         System.arraycopy(getEnvironmentId().getTrytes(), 0, trytes, i, getEnvironmentId().getWidth());
         i += getEnvironmentId().getWidth();
 
-        System.arraycopy(getTime().getTrytes(), 0, trytes, i, getTime().getWidth());
-        i += getTime().getWidth();
+        System.arraycopy(getEarliestTime().getTrytes(), 0, trytes, i, getEarliestTime().getWidth());
+        i += getEarliestTime().getWidth();
 
-        System.arraycopy(getDelay().getTrytes(), 0, trytes, i, getDelay().getWidth());
-        i += getDelay().getWidth();
-
-        System.arraycopy(getDuration().getTrytes(), 0, trytes, i, getDuration().getWidth());
+        System.arraycopy(getLatestTime().getTrytes(), 0, trytes, i, getLatestTime().getWidth());
 
         return trytes;
     }
@@ -143,17 +129,8 @@ public class Effect implements Comparable<Effect> {
     @Override
     public int compareTo(final Effect effect) {
 
-        if (getTime().get().getValue() + getDelay().get().getValue() < effect.getTime().get().getValue() + effect.getDelay().get().getValue()) {
+        final int difference = getEarliestTime().cmp(effect.getEarliestTime());
 
-            return -1;
-
-        } else if (getTime().get().getValue() + getDelay().get().getValue() > effect.getTime().get().getValue() + effect.getDelay().get().getValue()) {
-
-            return 1;
-
-        } else {
-
-            return getId().cmp(effect.getId());
-        }
+        return difference == 0 ? getId().cmp(effect.getId()) : difference;
     }
 }

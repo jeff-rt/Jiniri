@@ -251,7 +251,7 @@ public class Processor {
                                 while (true) {
 
                                     final Effect effect = entityEnvelope.effects.first();
-                                    if (effect.getTime().get().getValue() + effect.getDelay().get().getValue() <= time.get().getValue()) {
+                                    if (effect.getEarliestTime().get().getValue() <= time.get().getValue()) {
 
                                         effects.add(effect);
                                         entityEnvelope.effects.remove(effect);
@@ -332,7 +332,9 @@ public class Processor {
             final Environment environment = environments.get(environmentId);
             if (environment != null) {
 
-                final Effect effect = new Effect(generateId(), data, environmentId, time, delay, duration);
+                final Effect effect = new Effect(generateId(), data, environmentId,
+                        new Singlet(new Tryte(time.get().getValue() + delay.get().getValue())),
+                        new Singlet(new Tryte(time.get().getValue() + duration.get().getValue())));
                 int numberOfAffectedEntities = 0;
                 for (final Nonet affectedEntityId : environment.getEntityIds()) {
 
