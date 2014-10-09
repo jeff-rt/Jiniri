@@ -61,8 +61,20 @@ public class Core implements Conductor {
     }
 
     @Override
-    public void affect(final Nonet environmentId, final Singlet delay, final Singlet duration, final Singlet power,
-                       final Singlet pointer, final Singlet size) {
+    public void get(final Nonet type) {
+    }
+
+    @Override
+    public void add(final Singlet pointer, final Singlet size, final Nonet environmentId) {
+    }
+
+    @Override
+    public void remove(final Nonet type) {
+    }
+
+    @Override
+    public void affect(final Nonet environmentId, final Singlet pointer, final Singlet size,
+                       final Singlet power, final Singlet delay, final Singlet duration) {
 
         final Singlet[] data = new Singlet[(int)size.get().getValue()];
         for (int i = 0; i < data.length; i++) {
@@ -70,7 +82,7 @@ public class Core implements Conductor {
             data[i] = (Singlet)scratchpad[((int)pointer.get().getValue()) + i].clone();
         }
 
-        processor.affect(data, environmentId, delay, duration, power);
+        processor.affect(environmentId, data, delay, duration, power);
     }
 
     @Override
@@ -83,17 +95,5 @@ public class Core implements Conductor {
     public void leave(final Nonet environmentId) {
 
         processor.exclude(entity.getId(), environmentId);
-    }
-
-    @Override
-    public void distance(final Nonet environmentId, final Singlet distance) {
-    }
-
-    @Override
-    public void approach(final Nonet environmentId, final Singlet delta) {
-    }
-
-    @Override
-    public void retreat(final Nonet environmentId, final Singlet delta) {
     }
 }

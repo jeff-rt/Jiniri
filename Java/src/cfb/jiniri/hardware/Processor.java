@@ -324,8 +324,8 @@ public class Processor {
         });
     }
 
-    void affect(final Singlet[] data, final Nonet environmentId,
-                final Singlet delay, final Singlet duration, final Singlet power) {
+    void affect(final Nonet environmentId, final Singlet[] data,
+                final Singlet power, final Singlet delay, final Singlet duration) {
 
         (delay.get().getValue() == Tryte.ZERO_VALUE ? immediateCalls : deferredCalls).offer(() -> {
 

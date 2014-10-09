@@ -12,16 +12,16 @@ public interface Conductor {
 
     public void decay();
 
-    public void affect(final Nonet environmentId, final Singlet delay, final Singlet duration, final Singlet power,
-                       final Singlet pointer, final Singlet size);
+    public void get(final Nonet type);
+
+    public void add(final Singlet pointer, final Singlet size, final Nonet environmentId);
+
+    public void remove(final Nonet type);
+
+    public void affect(final Nonet environmentId, final Singlet pointer, final Singlet size,
+                       final Singlet power, final Singlet delay, final Singlet duration);
 
     public void join(final Nonet environmentId);
 
     public void leave(final Nonet environmentId);
-
-    public void distance(final Nonet environmentId, final Singlet distance);
-
-    public void approach(final Nonet environmentId, final Singlet delta);
-
-    public void retreat(final Nonet environmentId, final Singlet delta);
 }
