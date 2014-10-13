@@ -1,9 +1,7 @@
 package cfb.jiniri.model;
 
 import cfb.jiniri.operation.Conductor;
-import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
-import cfb.jiniri.type.Multiplet;
 import cfb.jiniri.type.Nonet;
 import cfb.jiniri.type.Singlet;
 
@@ -14,61 +12,23 @@ public abstract class Entity {
 
     public static final Nonet SEED_ENTITY_TYPE = Nonet.ZERO;
 
-    public static final Trit AWAITING = Trit.FALSE;
-    public static final Trit EXISTING = Trit.UNKNOWN;
-    public static final Trit DECAYING = Trit.TRUE;
+    protected final Tryte[] state;
 
-    protected final Nonet id;
+    protected Entity(final Tryte[] state) {
 
-    protected final Multiplet[] state;
-
-    protected Trit stage;
-
-    protected Entity(final Nonet id, final Multiplet[] state) {
-
-        this.id = (Nonet)id.clone();
-
-        this.state = new Multiplet[state.length];
-        for (int i = 0; i < this.state.length; i++) {
-
-            this.state[i] = state[i].clone();
-        }
-
-        setStage(AWAITING);
+        this.state = new Tryte[state.length];
+        System.arraycopy(state, 0, this.state, 0, state.length);
     }
 
-    public Nonet getId() {
-
-        return id;
-    }
-
-    public Multiplet[] getState() {
+    public Tryte[] getState() {
 
         return state;
     }
 
-    public Trit getStage() {
-
-        return stage;
-    }
-
-    public void setStage(final Trit stage) {
-
-        this.stage = stage;
-    }
-
     public int getStateSize() {
 
-        int size = 0;
-        for (final Multiplet stateElement : getState()) {
-
-            size += stateElement.getWidth();
-        }
-
-        return size;
+        return state.length;
     }
-
-    public abstract Tryte[] getTrytes();
 
     public abstract void react(final Singlet[] effectData, final Singlet[] scratchpad, final Conductor conductor);
 }

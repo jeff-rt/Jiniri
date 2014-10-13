@@ -57,7 +57,7 @@ public class Core implements Conductor {
     @Override
     public void decay() {
 
-        processor.destroy(entity.getId());
+        processor.destroy(entity);
     }
 
     @Override
@@ -88,12 +88,12 @@ public class Core implements Conductor {
     @Override
     public void join(final Nonet environmentId) {
 
-        processor.include(entity.getId(), environmentId);
+        processor.include(entity, environmentId);
     }
 
     @Override
     public void leave(final Nonet environmentId) {
 
-        processor.exclude(entity.getId(), environmentId);
+        processor.exclude(entity, environmentId);
     }
 }

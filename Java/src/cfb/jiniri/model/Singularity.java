@@ -8,7 +8,7 @@ import cfb.jiniri.type.Nonet;
  */
 public interface Singularity {
 
-    public Entity createEntity(final Nonet type, final Nonet id);
+    public Entity createEntity(final Nonet type);
 
-    public Entity restoreEntity(final Tryte[] trytes);
+    public Entity createEntity(final Nonet type, final Tryte[] state);
 }

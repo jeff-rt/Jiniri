@@ -8,7 +8,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
 /**
@@ -16,18 +15,12 @@ import java.nio.channels.FileChannel;
  */
 public class FileStorage implements Storage {
 
-    private static enum Stage {
+    private enum Stage {
 
         IDLING,
-        STORING_ENTITIES,
-        STORING_ENVIRONMENTS,
-        STORING_EFFECTS,
-        LOADING_ENTITIES,
-        LOADING_ENVIRONMENTS,
-        LOADING_EFFECTS
+        STORING,
+        LOADING
     }
-
-    private static final Tryte[] TERMINATOR = new Tryte[0];
 
     private final String path;
     private FileOutputStream outputStream;
@@ -44,7 +37,7 @@ public class FileStorage implements Storage {
     }
 
     @Override
-    public void beginStoring(final Tryte time) {
+    public void beginStoring() {
 
         if (stage != Stage.IDLING) {
 
@@ -56,9 +49,7 @@ public class FileStorage implements Storage {
             outputStream = new FileOutputStream(path);
             channel = outputStream.getChannel();
 
-            storeTrytes(new Tryte[] {time});
-
-            stage = Stage.STORING_ENTITIES;
+            stage = Stage.STORING;
 
         } catch (final IOException e) {
 
@@ -67,68 +58,30 @@ public class FileStorage implements Storage {
     }
 
     @Override
-    public void storeEntity(final Tryte[] entityTrytes) {
+    public void continueStoring(final Tryte... trytes) {
 
-        if (stage != Stage.STORING_ENTITIES) {
+        if (stage != Stage.STORING) {
 
             throw new RuntimeException("Incorrect workflow");
         }
 
-        validateSize(entityTrytes);
-        storeTrytes(entityTrytes);
-    }
+        try {
 
-    @Override
-    public void storeEnvironment(final Tryte[] environmentTrytes) {
+            channel.write(ByteBuffer.wrap(Converter.getBytes(trytes)));
 
-        if (stage == Stage.STORING_ENTITIES) {
+        } catch (final IOException e) {
 
-            storeTrytes(TERMINATOR);
-
-            stage = Stage.STORING_ENVIRONMENTS;
-
-        } else {
-
-            if (stage != Stage.STORING_ENVIRONMENTS) {
-
-                throw new RuntimeException("Incorrect workflow");
-            }
+            throw new RuntimeException(e);
         }
-
-        validateSize(environmentTrytes);
-        storeTrytes(environmentTrytes);
-    }
-
-    @Override
-    public void storeEffect(final Tryte[] effectTrytes) {
-
-        if (stage == Stage.STORING_ENVIRONMENTS) {
-
-            storeTrytes(TERMINATOR);
-
-            stage = Stage.STORING_EFFECTS;
-
-        } else {
-
-            if (stage != Stage.STORING_EFFECTS) {
-
-                throw new RuntimeException("Incorrect workflow");
-            }
-        }
-
-        validateSize(effectTrytes);
-        storeTrytes(effectTrytes);
     }
 
     @Override
     public void endStoring() {
 
-        if (stage != Stage.STORING_ENTITIES && stage != Stage.STORING_ENVIRONMENTS && stage != Stage.STORING_EFFECTS) {
+        if (stage != Stage.STORING) {
 
             throw new RuntimeException("Incorrect workflow");
         }
-
-        storeTrytes(TERMINATOR);
 
         try {
 
@@ -144,7 +97,7 @@ public class FileStorage implements Storage {
     }
 
     @Override
-    public Tryte beginLoading() {
+    public void beginLoading() {
 
         if (stage != Stage.IDLING) {
 
@@ -156,11 +109,7 @@ public class FileStorage implements Storage {
             inputStream = new FileInputStream(path);
             channel = inputStream.getChannel();
 
-            final Tryte[] trytes = loadTrytes();
-
-            stage = Stage.LOADING_ENTITIES;
-
-            return trytes[0];
+            stage = Stage.LOADING;
 
         } catch (final IOException e) {
 
@@ -169,89 +118,28 @@ public class FileStorage implements Storage {
     }
 
     @Override
-    public Tryte[] loadEntity() {
+    public void continueLoading(final Tryte[] bufferForTrytes) {
 
-        if (stage != Stage.LOADING_ENTITIES) {
-
-            throw new RuntimeException("Incorrect workflow");
-        }
-
-        final Tryte[] trytes = loadTrytes();
-
-        if (trytes == null) {
-
-            stage = Stage.LOADING_ENVIRONMENTS;
-        }
-
-        return trytes;
-    }
-
-    @Override
-    public Tryte[] loadEnvironment() {
-
-        if (stage != Stage.LOADING_ENVIRONMENTS) {
+        if (stage != Stage.LOADING) {
 
             throw new RuntimeException("Incorrect workflow");
         }
-
-        final Tryte[] trytes = loadTrytes();
-
-        if (trytes == null) {
-
-            stage = Stage.LOADING_EFFECTS;
-        }
-
-        return trytes;
-    }
-
-    @Override
-    public Tryte[] loadEffect() {
-
-        if (stage != Stage.LOADING_EFFECTS) {
-
-            throw new RuntimeException("Incorrect workflow");
-        }
-
-        final Tryte[] trytes = loadTrytes();
-
-        if (trytes == null) {
-
-            try {
-
-                channel.close();
-                inputStream.close();
-
-                stage = Stage.IDLING;
-
-            } catch (final IOException e) {
-
-                throw new RuntimeException(e);
-            }
-        }
-
-        return trytes;
-    }
-
-    private void validateSize(final Tryte[] trytes) {
-
-        if (trytes.length == TERMINATOR.length) {
-
-            throw new IllegalArgumentException("Illegal size: " + trytes.length);
-        }
-    }
-
-    private void storeTrytes(final Tryte[] trytes) {
-
-        final byte[] bytes = Converter.getBytes(trytes);
-        final ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + bytes.length);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putInt(bytes.length);
-        buffer.put(bytes);
-        buffer.flip();
 
         try {
 
-            channel.write(buffer);
+            final ByteBuffer buffer = ByteBuffer.allocate(bufferForTrytes.length * Converter.TRYTE_SIZE);
+            channel.read(buffer);
+            buffer.flip();
+
+            final byte[] fragment = new byte[Converter.TRYTE_SIZE];
+            for (int i = 0; i < bufferForTrytes.length; i++) {
+
+                for (int j = 0; j < fragment.length; j++) {
+
+                    fragment[j] = buffer.get();
+                }
+                bufferForTrytes[i] = Converter.getTrytes(fragment)[0];
+            }
 
         } catch (final IOException e) {
 
@@ -259,35 +147,20 @@ public class FileStorage implements Storage {
         }
     }
 
-    private Tryte[] loadTrytes() {
+    @Override
+    public void endLoading() {
+
+        if (stage != Stage.LOADING) {
+
+            throw new RuntimeException("Incorrect workflow");
+        }
 
         try {
 
-            ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES);
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            channel.close();
+            inputStream.close();
 
-            channel.read(buffer);
-
-            buffer.flip();
-            final int size = buffer.getInt();
-
-            if (size == TERMINATOR.length) {
-
-                return null;
-            }
-
-            buffer = ByteBuffer.allocate(size);
-
-            channel.read(buffer);
-
-            buffer.flip();
-            final byte[] bytes = new byte[buffer.limit()];
-            for (int i = 0; i < bytes.length; i++) {
-
-                bytes[i] = buffer.get();
-            }
-
-            return Converter.getTrytes(bytes);
+            stage = Stage.IDLING;
 
         } catch (final IOException e) {
 

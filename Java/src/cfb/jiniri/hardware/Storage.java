@@ -7,21 +7,15 @@ import cfb.jiniri.ternary.Tryte;
  */
 public interface Storage {
 
-    public void beginStoring(final Tryte time);
+    public void beginStoring();
 
-    public void storeEntity(final Tryte[] entityTrytes);
-
-    public void storeEnvironment(final Tryte[] environmentTrytes);
-
-    public void storeEffect(final Tryte[] effectTrytes);
+    public void continueStoring(final Tryte... trytes);
 
     public void endStoring();
 
-    public Tryte beginLoading();
+    public void beginLoading();
 
-    public Tryte[] loadEntity();
+    public void continueLoading(final Tryte[] bufferForTrytes);
 
-    public Tryte[] loadEnvironment();
-
-    public Tryte[] loadEffect();
+    public void endLoading();
 }
