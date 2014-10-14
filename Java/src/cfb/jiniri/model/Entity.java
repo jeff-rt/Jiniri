@@ -2,15 +2,13 @@ package cfb.jiniri.model;
 
 import cfb.jiniri.operation.Conductor;
 import cfb.jiniri.ternary.Tryte;
-import cfb.jiniri.type.Nonet;
-import cfb.jiniri.type.Singlet;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
 public abstract class Entity {
 
-    public static final Nonet SEED_ENTITY_TYPE = Nonet.ZERO;
+    public static final Tryte SEED_ENTITY_TYPE = Tryte.ZERO;
 
     protected final Tryte[] state;
 
@@ -30,5 +28,5 @@ public abstract class Entity {
         return state.length;
     }
 
-    public abstract void react(final Singlet[] effectData, final Singlet[] scratchpad, final Conductor conductor);
+    public abstract void react(final Tryte[] effectData, final Tryte[] scratchpad, final Conductor conductor);
 }

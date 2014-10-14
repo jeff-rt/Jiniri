@@ -1,6 +1,6 @@
 package cfb.jiniri.model;
 
-import cfb.jiniri.type.Nonet;
+import cfb.jiniri.ternary.Tryte;
 
 import java.util.Collections;
 import java.util.Set;
@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Environment {
 
-    public static final Nonet BORDER_ENVIRONMENT_ID = Nonet.ZERO;
+    public static final Tryte BORDER_ENVIRONMENT = Tryte.ZERO;
 
     private final Set<Entity> entities;
 

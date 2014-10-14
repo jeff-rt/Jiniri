@@ -3,8 +3,7 @@ package cfb.jiniri.hardware;
 import cfb.jiniri.model.Effect;
 import cfb.jiniri.model.Entity;
 import cfb.jiniri.operation.Conductor;
-import cfb.jiniri.type.Nonet;
-import cfb.jiniri.type.Singlet;
+import cfb.jiniri.ternary.Tryte;
 
 /**
  * (c) 2014 Come-from-Beyond
@@ -17,7 +16,7 @@ public class Core implements Conductor {
 
     private Entity entity;
 
-    private Singlet[] scratchpad;
+    private Tryte[] scratchpad;
 
     protected Core(final Processor processor, final int memoryCapacity) {
 
@@ -35,7 +34,7 @@ public class Core implements Conductor {
 
         for (final Effect effect : effects) {
 
-            scratchpad = new Singlet[memoryCapacity - entity.getStateSize() - effect.getDataSize()];
+            scratchpad = new Tryte[memoryCapacity - entity.getStateSize() - effect.getDataSize()];
             entity.react(effect.getData(), scratchpad, this);
         }
 
@@ -43,13 +42,10 @@ public class Core implements Conductor {
     }
 
     @Override
-    public void create(final Nonet type, final Singlet pointer, final Singlet size) {
+    public void create(final Tryte type, final Tryte pointer, final Tryte size) {
 
-        final Singlet[] data = new Singlet[(int)size.get().getValue()];
-        for (int i = 0; i < data.length; i++) {
-
-            data[i] = (Singlet)scratchpad[((int)pointer.get().getValue()) + i].clone();
-        }
+        final Tryte[] data = new Tryte[(int)size.getValue()];
+        System.arraycopy(scratchpad, (int)pointer.getValue(), data, 0, data.length);
 
         processor.create(type, data);
     }
@@ -61,38 +57,35 @@ public class Core implements Conductor {
     }
 
     @Override
-    public void get(final Nonet type) {
+    public void get(final Tryte type) {
     }
 
     @Override
-    public void add(final Singlet pointer, final Singlet size, final Nonet environmentId) {
+    public void add(final Tryte pointer, final Tryte size, final Tryte environmentId) {
     }
 
     @Override
-    public void remove(final Nonet type) {
+    public void remove(final Tryte type) {
     }
 
     @Override
-    public void affect(final Nonet environmentId, final Singlet pointer, final Singlet size,
-                       final Singlet power, final Singlet delay, final Singlet duration) {
+    public void affect(final Tryte environmentId, final Tryte pointer, final Tryte size,
+                       final Tryte power, final Tryte delay, final Tryte duration) {
 
-        final Singlet[] data = new Singlet[(int)size.get().getValue()];
-        for (int i = 0; i < data.length; i++) {
-
-            data[i] = (Singlet)scratchpad[((int)pointer.get().getValue()) + i].clone();
-        }
+        final Tryte[] data = new Tryte[(int)size.getValue()];
+        System.arraycopy(scratchpad, (int)pointer.getValue(), data, 0, data.length);
 
         processor.affect(environmentId, data, delay, duration, power);
     }
 
     @Override
-    public void join(final Nonet environmentId) {
+    public void join(final Tryte environmentId) {
 
         processor.include(entity, environmentId);
     }
 
     @Override
-    public void leave(final Nonet environmentId) {
+    public void leave(final Tryte environmentId) {
 
         processor.exclude(entity, environmentId);
     }

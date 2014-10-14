@@ -6,8 +6,6 @@ import cfb.jiniri.model.Environment;
 import cfb.jiniri.model.Singularity;
 import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
-import cfb.jiniri.type.Nonet;
-import cfb.jiniri.type.Singlet;
 import cfb.jiniri.util.Converter;
 
 import java.util.*;
@@ -18,9 +16,9 @@ import java.util.concurrent.*;
  */
 public class Processor {
 
-    private static final Singlet CREATION = Singlet.MINUS_ONE;
-    private static final Singlet EVOLUTION = Singlet.ZERO;
-    private static final Singlet DESTRUCTION = Singlet.PLUS_ONE;
+    private static final Tryte CREATION = Tryte.MINUS_ONE;
+    private static final Tryte EVOLUTION = Tryte.ZERO;
+    private static final Tryte DESTRUCTION = Tryte.PLUS_ONE;
 
     private static final class EntityEnvelope {
 
@@ -28,14 +26,14 @@ public class Processor {
         static final Trit EXISTING = Trit.UNKNOWN;
         static final Trit DECAYING = Trit.TRUE;
 
-        final Nonet type;
+        final Tryte type;
         final Entity entity;
         Trit stage;
 
-        final Set<Nonet> environmentIds;
+        final Set<Tryte> environmentIds;
         final SortedSet<Effect> effects;
 
-        EntityEnvelope(final Nonet type, final Entity entity, final Singlet[] data) {
+        EntityEnvelope(final Tryte type, final Entity entity, final Tryte[] data) {
 
             this.type = type;
             this.entity = entity;
@@ -50,7 +48,7 @@ public class Processor {
             }
         }
 
-        EntityEnvelope(final Nonet type, final Entity entity) {
+        EntityEnvelope(final Tryte type, final Entity entity) {
 
             this(type, entity, null);
         }
@@ -59,8 +57,8 @@ public class Processor {
 
             int i = 0;
 
-            final Nonet type = new Nonet(trytes, i, Nonet.WIDTH);
-            i += Nonet.WIDTH;
+            final Tryte type = trytes[i];
+            i++;
 
             final Tryte[] state = new Tryte[(int)trytes[i].getValue()];
             i++;
@@ -76,26 +74,23 @@ public class Processor {
             i++;
             while (numberOfEnvironments-- > 0) {
 
-                entityEnvelope.environmentIds.add(new Nonet(trytes, i, Nonet.WIDTH));
-                i += Nonet.WIDTH;
+                entityEnvelope.environmentIds.add(trytes[i]);
+                i++;
             }
 
             int numberOfEffects = (int)trytes[i].getValue();
             i++;
             while (numberOfEffects-- > 0) {
 
-                final Singlet[] data = new Singlet[(int)trytes[i].getValue()];
+                final Tryte[] data = new Tryte[(int)trytes[i].getValue()];
                 i++;
-                for (int j = 0; j < data.length; j++) {
+                System.arraycopy(trytes, i, data, 0, data.length);
+                i += data.length;
 
-                    data[j] = new Singlet(trytes[i]);
-                    i++;
-                }
-
-                final Singlet earliestTime = new Singlet(trytes[i]);
+                final Tryte earliestTime = trytes[i];
                 i++;
 
-                final Singlet latestTime = new Singlet(trytes[i]);
+                final Tryte latestTime = trytes[i];
                 i++;
 
                 entityEnvelope.effects.add(new Effect(data, earliestTime, latestTime));
@@ -108,10 +103,7 @@ public class Processor {
 
             final List<Tryte> trytes = new LinkedList<>();
 
-            for (final Tryte tryte : type.getTrytes()) {
-
-                trytes.add(tryte);
-            }
+            trytes.add(type);
 
             trytes.add(new Tryte(entity.getStateSize()));
             for (final Tryte tryte : entity.getState()) {
@@ -122,25 +114,22 @@ public class Processor {
             trytes.add(new Tryte(stage));
 
             trytes.add(new Tryte(environmentIds.size()));
-            for (final Nonet environmentId : environmentIds) {
+            for (final Tryte environmentId : environmentIds) {
 
-                for (final Tryte tryte : environmentId.getTrytes()) {
-
-                    trytes.add(tryte);
-                }
+                trytes.add(environmentId);
             }
 
             trytes.add(new Tryte(effects.size()));
             for (final Effect effect : effects) {
 
                 trytes.add(new Tryte(effect.getDataSize()));
-                for (final Singlet singlet : effect.getData()) {
+                for (final Tryte tryte : effect.getData()) {
 
-                    trytes.add(singlet.get());
+                    trytes.add(tryte);
                 }
 
-                trytes.add(effect.getEarliestTime().get());
-                trytes.add(effect.getLatestTime().get());
+                trytes.add(effect.getEarliestTime());
+                trytes.add(effect.getLatestTime());
             }
 
             return trytes.toArray(new Tryte[trytes.size()]);
@@ -149,12 +138,12 @@ public class Processor {
 
     private final BlockingQueue<Core> cores;
 
-    private final Singlet time;
+    private Tryte time;
 
     private Singularity singularity;
 
     private final Map<Entity, EntityEnvelope> entityEnvelopes;
-    private final Map<Nonet, Environment> environments;
+    private final Map<Tryte, Environment> environments;
 
     private final ExecutorService processorExecutor;
     private final ExecutorService coreExecutor;
@@ -173,8 +162,6 @@ public class Processor {
             cores.offer(new Core(this, coreMemoryCapacity));
         }
 
-        time = new Singlet();
-
         entityEnvelopes = new ConcurrentHashMap<>();
         environments = new ConcurrentHashMap<>();
 
@@ -187,7 +174,7 @@ public class Processor {
 
     public void launch(final Singularity singularity) {
 
-        time.set(Tryte.ZERO);
+        time = Tryte.ZERO;
 
         this.singularity = singularity;
 
@@ -197,7 +184,7 @@ public class Processor {
 
         environments.clear();
         final Environment borderEnvironment = new Environment();
-        environments.put(Environment.BORDER_ENVIRONMENT_ID, borderEnvironment);
+        environments.put(Environment.BORDER_ENVIRONMENT, borderEnvironment);
 
         start();
     }
@@ -224,7 +211,7 @@ public class Processor {
 
         storage.beginStoring();
 
-        storage.continueStoring(time.get());
+        storage.continueStoring(time);
 
         storage.continueStoring(new Tryte(entityEnvelopes.size()));
         for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
@@ -243,7 +230,7 @@ public class Processor {
 
         final Tryte[] bufferForTrytes = new Tryte[1];
         storage.continueLoading(bufferForTrytes);
-        time.set(bufferForTrytes[0]);
+        time = bufferForTrytes[0];
 
         storage.continueLoading(bufferForTrytes);
         int numberOfEntityEnvelopes = (int)bufferForTrytes[0].getValue();
@@ -260,7 +247,7 @@ public class Processor {
 
         for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
 
-            for (final Nonet environmentId : entityEnvelope.environmentIds) {
+            for (final Tryte environmentId : entityEnvelope.environmentIds) {
 
                 Environment environment = environments.get(environmentId);
                 if (environment == null) {
@@ -296,23 +283,23 @@ public class Processor {
 
                         entityEnvelope.stage = EntityEnvelope.EXISTING;
 
-                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT_ID, CREATION)));
+                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, CREATION)));
 
                     } else if (entityEnvelope.stage.equals(EntityEnvelope.DECAYING)) {
 
                         entityEnvelopes.remove(entityEnvelope.entity);
-                        for (final Nonet environmentId : entityEnvelope.environmentIds) {
+                        for (final Tryte environmentId : entityEnvelope.environmentIds) {
 
                             environments.get(environmentId).exclude(entityEnvelope.entity);
                         }
 
-                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT_ID, DESTRUCTION)));
+                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, DESTRUCTION)));
                     }
                 }
 
-                time.set(time.get().add(Tryte.PLUS_ONE));
-                final Environment borderEnvironment = environments.get(Environment.BORDER_ENVIRONMENT_ID);
-                final Effect evolutionEffect = new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT_ID, EVOLUTION, time));
+                time = time.add(Tryte.PLUS_ONE);
+                final Environment borderEnvironment = environments.get(Environment.BORDER_ENVIRONMENT);
+                final Effect evolutionEffect = new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, EVOLUTION, time));
                 for (final Entity entity : borderEnvironment.getEntities()) {
 
                     entityEnvelopes.get(entity).effects.add(evolutionEffect);
@@ -347,7 +334,7 @@ public class Processor {
                                 while (true) {
 
                                     final Effect effect = entityEnvelope.effects.first();
-                                    if (effect.getEarliestTime().get().getValue() <= time.get().getValue()) {
+                                    if (effect.getEarliestTime().getValue() <= time.getValue()) {
 
                                         effects.add(effect);
                                         entityEnvelope.effects.remove(effect);
@@ -403,7 +390,7 @@ public class Processor {
         }
     }
 
-    void create(final Nonet type, final Singlet[] data) {
+    void create(final Tryte type, final Tryte[] data) {
 
         deferredCalls.offer(() -> {
 
@@ -420,21 +407,21 @@ public class Processor {
         });
     }
 
-    void affect(final Nonet environmentId, final Singlet[] data,
-                final Singlet power, final Singlet delay, final Singlet duration) {
+    void affect(final Tryte environmentId, final Tryte[] data,
+                final Tryte power, final Tryte delay, final Tryte duration) {
 
-        (delay.get().getValue() == Tryte.ZERO_VALUE ? immediateCalls : deferredCalls).offer(() -> {
+        (delay.getValue() == Tryte.ZERO_VALUE ? immediateCalls : deferredCalls).offer(() -> {
 
             final Environment environment = environments.get(environmentId);
             if (environment != null) {
 
                 final Effect effect = new Effect(data,
-                        new Singlet(new Tryte(time.get().getValue() + delay.get().getValue())),
-                        new Singlet(new Tryte(time.get().getValue() + duration.get().getValue())));
+                        new Tryte(new Tryte(time.getValue() + delay.getValue())),
+                        new Tryte(new Tryte(time.getValue() + duration.getValue())));
                 int numberOfAffectedEntities = 0;
                 for (final Entity affectedEntity : environment.getEntities()) {
 
-                    if (power.get().getValue() > 0 && ++numberOfAffectedEntities > power.get().getValue()) {
+                    if (power.getValue() > 0 && ++numberOfAffectedEntities > power.getValue()) {
 
                         break;
                     }
@@ -445,7 +432,7 @@ public class Processor {
         });
     }
 
-    void include(final Entity entity, final Nonet environmentId) {
+    void include(final Entity entity, final Tryte environmentId) {
 
         deferredCalls.offer(() -> {
 
@@ -464,7 +451,7 @@ public class Processor {
         });
     }
 
-    void exclude(final Entity entity, final Nonet environmentId) {
+    void exclude(final Entity entity, final Tryte environmentId) {
 
         deferredCalls.offer(() -> {
 

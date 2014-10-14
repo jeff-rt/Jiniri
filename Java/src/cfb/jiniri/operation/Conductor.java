@@ -1,27 +1,26 @@
 package cfb.jiniri.operation;
 
-import cfb.jiniri.type.Nonet;
-import cfb.jiniri.type.Singlet;
+import cfb.jiniri.ternary.Tryte;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
 public interface Conductor {
 
-    public void create(final Nonet type, final Singlet pointer, final Singlet size);
+    public void create(final Tryte type, final Tryte pointer, final Tryte size);
 
     public void decay();
 
-    public void get(final Nonet type);
+    public void get(final Tryte type);
 
-    public void add(final Singlet pointer, final Singlet size, final Nonet environmentId);
+    public void add(final Tryte pointer, final Tryte size, final Tryte environmentId);
 
-    public void remove(final Nonet type);
+    public void remove(final Tryte type);
 
-    public void affect(final Nonet environmentId, final Singlet pointer, final Singlet size,
-                       final Singlet power, final Singlet delay, final Singlet duration);
+    public void affect(final Tryte environmentId, final Tryte pointer, final Tryte size,
+                       final Tryte power, final Tryte delay, final Tryte duration);
 
-    public void join(final Nonet environmentId);
+    public void join(final Tryte environmentId);
 
-    public void leave(final Nonet environmentId);
+    public void leave(final Tryte environmentId);
 }

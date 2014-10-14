@@ -1,50 +1,47 @@
 package cfb.jiniri.model;
 
-import cfb.jiniri.type.Singlet;
+import cfb.jiniri.ternary.Tryte;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
 public class Effect implements Comparable<Effect> {
 
-    private final Singlet[] data;
+    private final Tryte[] data;
 
-    private final Singlet earliestTime;
-    private final Singlet latestTime;
+    private final Tryte earliestTime;
+    private final Tryte latestTime;
 
-    public Effect(final Singlet[] data, final Singlet earliestTime, final Singlet latestTime) {
+    public Effect(final Tryte[] data, final Tryte earliestTime, final Tryte latestTime) {
 
-        this.data = new Singlet[data.length];
-        for (int i = 0; i < this.data.length; i++) {
+        this.data = new Tryte[data.length];
+        System.arraycopy(data, 0, this.data, 0, data.length);
 
-            this.data[i] = (Singlet)data[i].clone();
-        }
-
-        this.earliestTime = (Singlet)earliestTime.clone();
-        this.latestTime = (Singlet)latestTime.clone();
+        this.earliestTime = earliestTime;
+        this.latestTime = latestTime;
     }
 
-    public Effect(final Singlet[] data) {
+    public Effect(final Tryte[] data) {
 
-        this(data, Singlet.ZERO, Singlet.ZERO);
+        this(data, Tryte.ZERO, Tryte.ZERO);
     }
 
-    public Singlet[] getData() {
+    public Tryte[] getData() {
 
         return data;
     }
 
     public int getDataSize() {
 
-        return getData()[0].getWidth() * getData().length;
+        return getData().length;
     }
 
-    public Singlet getEarliestTime() {
+    public Tryte getEarliestTime() {
 
         return earliestTime;
     }
 
-    public Singlet getLatestTime() {
+    public Tryte getLatestTime() {
 
         return latestTime;
     }
@@ -52,8 +49,17 @@ public class Effect implements Comparable<Effect> {
     @Override
     public int compareTo(final Effect effect) {
 
-        final int difference = getEarliestTime().cmp(effect.getEarliestTime());
+        if (getEarliestTime().getValue() < effect.getEarliestTime().getValue()) {
 
-        return difference == 0 ? hashCode() - effect.hashCode() : difference;
+            return -1;
+
+        } else if (getEarliestTime().getValue() > effect.getEarliestTime().getValue()) {
+
+            return 1;
+
+        } else {
+
+            return hashCode() - effect.hashCode();
+        }
     }
 }

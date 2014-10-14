@@ -3,7 +3,6 @@ package cfb.jiniri.hardware.impl;
 import cfb.jiniri.hardware.Antiterminal;
 import cfb.jiniri.hardware.Terminal;
 import cfb.jiniri.ternary.Tryte;
-import cfb.jiniri.type.Multiplet;
 import cfb.jiniri.type.Nonet;
 import cfb.jiniri.util.Converter;
 
@@ -19,10 +18,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class DirectTerminal implements Terminal, Antiterminal {
 
-    private final Set<Multiplet> listenedChannelIds;
+    private final Set<Nonet> listenedChannelIds;
 
-    private final Map<Multiplet, Queue<Tryte[]>> outgoingMessages;
-    private final Map<Multiplet, Queue<Tryte[]>> incomingMessages;
+    private final Map<Nonet, Queue<Tryte[]>> outgoingMessages;
+    private final Map<Nonet, Queue<Tryte[]>> incomingMessages;
 
     public DirectTerminal() {
 
@@ -35,7 +34,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public void join(final Tryte[] channel) {
 
-        final Multiplet channelId = new Nonet(channel);
+        final Nonet channelId = new Nonet(channel);
         if (outgoingMessages.putIfAbsent(channelId, new ConcurrentLinkedQueue<>()) != null) {
 
             throw new RuntimeException("Already joined channel: " + channelId);
@@ -46,7 +45,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public void leave(final Tryte[] channel) {
 
-        final Multiplet channelId = new Nonet(channel);
+        final Nonet channelId = new Nonet(channel);
         if (outgoingMessages.remove(channelId) == null) {
 
             throw new RuntimeException("Non-joined channel: " + channelId);
@@ -59,7 +58,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public void send(final Tryte[] channel, final Tryte[] message) {
 
-        final Multiplet channelId = new Nonet(channel);
+        final Nonet channelId = new Nonet(channel);
         final Queue<Tryte[]> outgoingMessages = this.outgoingMessages.get(channelId);
         if (outgoingMessages == null) {
 
@@ -75,7 +74,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public Tryte[] receive(final Tryte[] channel) {
 
-        final Multiplet channelId = new Nonet(channel);
+        final Nonet channelId = new Nonet(channel);
         final Queue<Tryte[]> incomingMessages = this.incomingMessages.get(channelId);
         if (incomingMessages == null) {
 
@@ -88,7 +87,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public void join(final byte[] channel) {
 
-        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        final Nonet channelId = new Nonet(Converter.getTrytes(channel));
         if (outgoingMessages.containsKey(channelId)) {
 
             if (!listenedChannelIds.add(channelId)) {
@@ -105,7 +104,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public void leave(final byte[] channel) {
 
-        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        final Nonet channelId = new Nonet(Converter.getTrytes(channel));
         if (outgoingMessages.containsKey(channelId)) {
 
             if (!listenedChannelIds.remove(channelId)) {
@@ -122,7 +121,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public void send(final byte[] channel, final byte[] message) {
 
-        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        final Nonet channelId = new Nonet(Converter.getTrytes(channel));
         final Queue<Tryte[]> incomingMessages = this.incomingMessages.get(channelId);
         if (incomingMessages == null) {
 
@@ -143,7 +142,7 @@ public class DirectTerminal implements Terminal, Antiterminal {
     @Override
     public byte[] receive(final byte[] channel) {
 
-        final Multiplet channelId = new Nonet(Converter.getTrytes(channel));
+        final Nonet channelId = new Nonet(Converter.getTrytes(channel));
         final Queue<Tryte[]> outgoingMessages = this.outgoingMessages.get(channelId);
         if (outgoingMessages == null) {
 
