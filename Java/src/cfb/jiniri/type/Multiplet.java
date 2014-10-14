@@ -50,6 +50,14 @@ public class Multiplet {
         trytes[index] = tryte;
     }
 
+    public void set(final Tryte[] trytes, final int offset) {
+
+        for (int i = 0; i < this.trytes.length; i++) {
+
+            set(i, trytes[offset + i]);
+        }
+    }
+
     public Multiplet not() {
 
         for (int i = 0; i < getWidth(); i++) {
