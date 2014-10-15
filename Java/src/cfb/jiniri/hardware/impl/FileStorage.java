@@ -2,7 +2,6 @@ package cfb.jiniri.hardware.impl;
 
 import cfb.jiniri.hardware.Storage;
 import cfb.jiniri.ternary.Trit;
-import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.util.Converter;
 
 import java.io.FileInputStream;

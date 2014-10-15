@@ -18,13 +18,8 @@ public class Processor {
 
     private static final class EntityEnvelope {
 
-        static final Trit AWAITING = Trit.FALSE;
-        static final Trit EXISTING = Trit.UNKNOWN;
-        static final Trit DECAYING = Trit.TRUE;
-
         final Tryte type;
         final Entity entity;
-        Trit stage;
 
         final Set<Tryte> environmentIds;
         final SortedSet<Effect> effects;
@@ -33,7 +28,6 @@ public class Processor {
 
             this.type = type;
             this.entity = entity;
-            stage = AWAITING;
 
             environmentIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
             effects = new ConcurrentSkipListSet<>();
@@ -58,8 +52,6 @@ public class Processor {
             final Trit[] state = trytes[i++].getTrits();
 
             final EntityEnvelope entityEnvelope = new EntityEnvelope(type, singularity.createEntity(type, state));
-
-            entityEnvelope.stage = trytes[i++].getTrits()[0];
 
             int numberOfEnvironments = trytes[i++].getIntValue();
             while (numberOfEnvironments-- > 0) {
@@ -88,8 +80,6 @@ public class Processor {
             trytes.add(type);
 
             trytes.add(new Tryte(entity.getState()));
-
-            trytes.add(new Tryte(stage.getValue()));
 
             trytes.add(new Tryte(environmentIds.size()));
             for (final Tryte environmentId : environmentIds) {
@@ -244,47 +234,23 @@ public class Processor {
 
             while (true) {
 
-                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
-
-                    if (entityEnvelope.stage.equals(EntityEnvelope.EXISTING)
-                            && entityEnvelope.environmentIds.isEmpty()) {
-
-                        entityEnvelope.stage = EntityEnvelope.DECAYING;
-                    }
-                }
-
-                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
-
-                    if (entityEnvelope.stage.equals(EntityEnvelope.AWAITING)) {
-
-                        entityEnvelope.stage = EntityEnvelope.EXISTING;
-
-                    } else if (entityEnvelope.stage.equals(EntityEnvelope.DECAYING)) {
-
-                        entityEnvelopes.remove(entityEnvelope.entity);
-                        for (final Tryte environmentId : entityEnvelope.environmentIds) {
-
-                            final Environment environment = environments.get(environmentId);
-                            environment.exclude(entityEnvelope.entity);
-                            if (environment.getEntities().isEmpty()) {
-
-                                environments.remove(environmentId);
-                            }
-                        }
-                    }
-                }
-
-                time = time.add(Tryte.PLUS_ONE);
-                final Environment borderEnvironment = environments.get(Environment.BORDER_ENVIRONMENT);
-                final Effect evolutionEffect = new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, time, new Tryte(System.currentTimeMillis())));
-                for (final Entity entity : borderEnvironment.getEntities()) {
-
-                    entityEnvelopes.get(entity).effects.add(evolutionEffect);
-                }
-
                 for (final Runnable call : deferredCalls) {
 
                     call.run();
+                }
+
+                if (isShuttingDown) {
+
+                    store();
+
+                    return;
+                }
+
+                time = time.add(Tryte.PLUS_ONE);
+                final Effect evolutionEffect = new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, time, new Tryte(System.currentTimeMillis())));
+                for (final Entity entity : environments.get(Environment.BORDER_ENVIRONMENT).getEntities()) {
+
+                    entityEnvelopes.get(entity).effects.add(evolutionEffect);
                 }
 
                 do {
@@ -294,41 +260,39 @@ public class Processor {
                         call.run();
                     }
 
-                    if (isShuttingDown) {
-
-                        store();
-
-                        return;
-                    }
-
                     for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
 
-                        if (entityEnvelope.stage.equals(EntityEnvelope.EXISTING)) {
+                        final List<Effect> effects = new LinkedList<>();
+                        try {
 
-                            final List<Effect> effects = new LinkedList<>();
-                            try {
+                            while (true) {
 
-                                while (true) {
+                                final Effect effect = entityEnvelope.effects.first();
+                                if (effect.getEarliestTime().getLongValue() <= time.getLongValue()) {
 
-                                    final Effect effect = entityEnvelope.effects.first();
-                                    if (effect.getEarliestTime().getLongValue() <= time.getLongValue()) {
-
-                                        effects.add(effect);
-                                        entityEnvelope.effects.remove(effect);
-                                    }
+                                    effects.add(effect);
+                                    entityEnvelope.effects.remove(effect);
                                 }
-
-                            } catch (final NoSuchElementException e) {
                             }
 
-                            if (effects.size() > 0) {
+                        } catch (final NoSuchElementException e) {
+                        }
 
-                                process(entityEnvelope, effects.toArray(new Effect[effects.size()]));
-                            }
+                        if (effects.size() > 0) {
+
+                            process(entityEnvelope, effects.toArray(new Effect[effects.size()]));
                         }
                     }
 
                 } while (!immediateCalls.isEmpty());
+
+                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+
+                    if (entityEnvelope.environmentIds.isEmpty() && entityEnvelope.effects.isEmpty()) {
+
+                        salvage(entityEnvelope);
+                    }
+                }
             }
         });
     }
@@ -380,14 +344,14 @@ public class Processor {
 
         deferredCalls.offer(() -> {
 
-            entityEnvelopes.get(entity).stage = EntityEnvelope.DECAYING;
+            salvage(entityEnvelopes.get(entity));
         });
     }
 
     void affect(final Tryte environmentId, final Trit[] data,
                 final Tryte power, final Tryte delay, final Tryte duration) {
 
-        (delay.getLongValue() == 0 ? immediateCalls : deferredCalls).offer(() -> {
+        (delay.getLongValue() <= 0 ? immediateCalls : deferredCalls).offer(() -> {
 
             final Environment environment = environments.get(environmentId);
             if (environment != null) {
@@ -438,7 +402,8 @@ public class Processor {
                 synchronized (environments) {
 
                     environment.exclude(entity);
-                    if (environment.getEntities().isEmpty()) {
+                    if (!environmentId.equals(Environment.BORDER_ENVIRONMENT)
+                            && environment.getEntities().isEmpty()) {
 
                         environments.remove(environmentId);
                     }
@@ -447,5 +412,20 @@ public class Processor {
                 entityEnvelopes.get(entity).environmentIds.remove(environmentId);
             }
         });
+    }
+
+    private void salvage(final EntityEnvelope entityEnvelope) {
+
+        entityEnvelopes.remove(entityEnvelope.entity);
+
+        for (final Tryte environmentId : entityEnvelope.environmentIds) {
+
+            final Environment environment = environments.get(environmentId);
+            environment.exclude(entityEnvelope.entity);
+            if (environment.getEntities().isEmpty()) {
+
+                environments.remove(environmentId);
+            }
+        }
     }
 }
