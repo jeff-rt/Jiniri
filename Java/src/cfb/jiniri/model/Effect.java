@@ -1,5 +1,6 @@
 package cfb.jiniri.model;
 
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 
 /**
@@ -7,26 +8,26 @@ import cfb.jiniri.ternary.Tryte;
  */
 public class Effect implements Comparable<Effect> {
 
-    private final Tryte[] data;
+    private final Trit[] data;
 
     private final Tryte earliestTime;
     private final Tryte latestTime;
 
-    public Effect(final Tryte[] data, final Tryte earliestTime, final Tryte latestTime) {
+    public Effect(final Trit[] data, final Tryte earliestTime, final Tryte latestTime) {
 
-        this.data = new Tryte[data.length];
+        this.data = new Trit[data.length];
         System.arraycopy(data, 0, this.data, 0, data.length);
 
         this.earliestTime = earliestTime;
         this.latestTime = latestTime;
     }
 
-    public Effect(final Tryte[] data) {
+    public Effect(final Trit[] data) {
 
         this(data, Tryte.ZERO, Tryte.ZERO);
     }
 
-    public Tryte[] getData() {
+    public Trit[] getData() {
 
         return data;
     }
@@ -49,11 +50,11 @@ public class Effect implements Comparable<Effect> {
     @Override
     public int compareTo(final Effect effect) {
 
-        if (getEarliestTime().getValue() < effect.getEarliestTime().getValue()) {
+        if (getEarliestTime().cmp(effect.getEarliestTime()) == Tryte.LESS) {
 
             return -1;
 
-        } else if (getEarliestTime().getValue() > effect.getEarliestTime().getValue()) {
+        } else if (getEarliestTime().cmp(effect.getEarliestTime()) == Tryte.GREATER) {
 
             return 1;
 

@@ -1,5 +1,6 @@
 package cfb.jiniri.type;
 
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 
 /**
@@ -7,91 +8,58 @@ import cfb.jiniri.ternary.Tryte;
  */
 public class Struct {
 
-    public enum Type {
+    public static final class VariableProperties {
 
-        SINGLET,
-        TRIPLET,
-        NONET
-    }
-
-    public static class Field {
-
-        final Type type;
+        final int width;
         final int length;
 
-        public Field(final Type type, final int length) {
+        public VariableProperties(final int width, final int length) {
 
-            this.type = type;
+            this.width = width;
             this.length = length;
         }
     }
 
-    private final Multiplet[][] fields;
+    private final Variable[][] variables;
 
-    public Struct(final Field... fields) {
+    public Struct(final VariableProperties... properties) {
 
-        this.fields = new Multiplet[fields.length][];
-        for (int i = 0; i < this.fields.length; i++) {
+        this.variables = new Variable[properties.length][];
+        for (int i = 0; i < this.variables.length; i++) {
 
-            final int length = fields[i].length;
+            final int length = properties[i].length;
             if (length < 1) {
 
-                throw new IllegalArgumentException("Illegal field length: " + length);
+                throw new IllegalArgumentException("Illegal variable length: " + length);
             }
 
-            switch (fields[i].type) {
+            this.variables[i] = new Variable[length];
+            for (int j = 0; j < this.variables[i].length; j++) {
 
-                case SINGLET: {
-
-                    this.fields[i] = new Singlet[length];
-                    for (int j = 0; j < this.fields[i].length; j++) {
-
-                        this.fields[i][j] = new Singlet();
-                    }
-
-                } break;
-
-                case TRIPLET: {
-
-                    this.fields[i] = new Triplet[length];
-                    for (int j = 0; j < this.fields[i].length; j++) {
-
-                        this.fields[i][j] = new Triplet();
-                    }
-
-                } break;
-
-                default: {
-
-                    this.fields[i] = new Nonet[length];
-                    for (int j = 0; j < this.fields[i].length; j++) {
-
-                        this.fields[i][j] = new Nonet();
-                    }
-                }
+                this.variables[i][j] = new Variable(properties[i].width);
             }
         }
     }
 
-    public void fill(final Tryte[] trytes, final int offset) {
+    public void fill(final Trit[] trits, final int offset) {
 
         int i = 0;
-        for (int j = 0; j < fields.length; j++) {
+        for (int j = 0; j < variables.length; j++) {
 
-            for (int k = 0; k < fields[j].length; k++) {
+            for (int k = 0; k < variables[j].length; k++) {
 
-                fields[j][k].set(trytes, offset + i);
-                i += fields[j][k].getWidth();
+                variables[j][k].set(new Tryte(trits, offset + i, variables[j][k].get().getWidth()));
+                i += variables[j][k].get().getWidth();
             }
         }
     }
 
-    public Multiplet getField(final int fieldIndex, final int arrayIndex) {
+    public Tryte getField(final int fieldIndex, final int arrayIndex) {
 
-        return fields[fieldIndex][arrayIndex];
+        return variables[fieldIndex][arrayIndex].get();
     }
 
-    public Multiplet getField(final int fieldIndex) {
+    public Tryte getField(final int fieldIndex) {
 
         return getField(fieldIndex, 0);
     }

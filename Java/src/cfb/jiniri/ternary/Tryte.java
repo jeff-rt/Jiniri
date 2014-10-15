@@ -1,132 +1,131 @@
 package cfb.jiniri.ternary;
 
+import java.math.BigInteger;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * (c) 2014 Come-from-Beyond
  */
 public class Tryte {
 
-    public static final int NUMBER_OF_TRITS = 27;
+    public static final Tryte MINUS_ONE = new Tryte(BigInteger.valueOf(-1));
+    public static final Tryte ZERO = new Tryte(BigInteger.ZERO);
+    public static final Tryte PLUS_ONE = new Tryte(BigInteger.ONE);
 
-    public static final long MINUS_ONE_VALUE = -1L;
-    public static final long ZERO_VALUE = 0L;
-    public static final long PLUS_ONE_VALUE = 1L;
+    public static final int LESS = -1;
+    public static final int EQUAL = 0;
+    public static final int GREATER = 1;
 
-    public static final Tryte MINUS_ONE;
-    public static final Tryte ZERO;
-    public static final Tryte PLUS_ONE;
+    private static final BigInteger RADIX = BigInteger.valueOf(Trit.RADIX);
 
-    public static final long MIN_VALUE;
-    public static final long MAX_VALUE;
-
-    public static final long NUMBER_OF_VALUES;
-
-    private static final long[] COEFFICIENTS = new long[NUMBER_OF_TRITS];
-
-    private static final long MULTIPLICATION_BASE;
-
-    static {
-
-        COEFFICIENTS[0] = 1L;
-        for (int i = 1; i < COEFFICIENTS.length; i++) {
-
-            COEFFICIENTS[i] = COEFFICIENTS[i - 1] * Trit.RADIX;
-        }
-
-        MAX_VALUE = (COEFFICIENTS[COEFFICIENTS.length - 1] - 1) / 2;
-        MIN_VALUE = -MAX_VALUE;
-
-        MINUS_ONE = new Tryte(MINUS_ONE_VALUE);
-        ZERO = new Tryte(ZERO_VALUE);
-        PLUS_ONE = new Tryte(PLUS_ONE_VALUE);
-
-        NUMBER_OF_VALUES = MAX_VALUE - MIN_VALUE + 1;
-
-        MULTIPLICATION_BASE = COEFFICIENTS[NUMBER_OF_TRITS / 3];
-    }
-
-    private final long value;
+    private final int width;
+    private final BigInteger value;
 
     public Tryte(final long value) {
 
-        if (value < MIN_VALUE || value > MAX_VALUE) {
+        this(BigInteger.valueOf(value));
+    }
 
-            throw new IllegalArgumentException("Illegal tryte value: " + value);
-        }
+    private Tryte(final BigInteger value) {
 
+        width = getTrits(value).length;
         this.value = value;
     }
 
     public Tryte(final Trit[] trits, final int offset, final int length) {
 
-        if (length < 1 || length > NUMBER_OF_TRITS) {
-
-            throw new IllegalArgumentException("Illegal number of trits: " + length);
-        }
-
-        long value = ZERO_VALUE;
-        for (int i = 0; i < length; i++) {
-
-            value += trits[offset + i].getValue() * COEFFICIENTS[i];
-        }
-        this.value = value;
+        width = length;
+        value = getBigInteger(trits, offset, length);
     }
 
-    public Tryte(final Trit... trits) {
+    public Tryte(final Trit[] trits) {
 
         this(trits, 0, trits.length);
     }
 
-    public Tryte(final Tryte tryte) {
+    public Tryte(final int width, final Tryte tryte) {
 
-        this(tryte.getValue());
+        final Trit[] trits = new Trit[width];
+        for (int i = 0; i < trits.length; i++) {
+
+            trits[i] = Trit.UNKNOWN;
+        }
+
+        final Trit[] trits2 = tryte.getTrits();
+        System.arraycopy(trits2, 0, trits, 0, trits2.length < trits.length ? trits2.length : trits.length);
+
+        this.width = width;
+        value = getBigInteger(trits, 0, trits.length);
     }
 
-    public long getValue() {
+    public int getWidth() {
 
-        return value;
+        return width;
+    }
+
+    public int getIntValue() {
+
+        return value.intValueExact();
+    }
+
+    public long getLongValue() {
+
+        return value.longValueExact();
     }
 
     public void getTrits(final Trit[] trits, final int offset) {
 
         final int capacity = trits.length - offset;
-        if (capacity < NUMBER_OF_TRITS) {
+        if (capacity < getWidth()) {
 
             throw new IllegalArgumentException("Not enough capacity: " + capacity);
         }
 
-        long value = getValue();
-        if (value < ZERO_VALUE) {
+        for (int i = 0; i < getWidth(); i++) {
 
-            value = -value;
+            trits[offset + i] = Trit.UNKNOWN;
         }
-
-        for (int i = 0; i < NUMBER_OF_TRITS; i++) {
-
-            byte remainder = (byte)(value % Trit.RADIX);
-            value /= Trit.RADIX;
-            if (remainder > Trit.MAX_VALUE) {
-
-                remainder -= Trit.RADIX;
-                value++;
-            }
-            trits[offset + i] = Trit.getTrit(remainder);
-        }
-
-        if (getValue() < ZERO_VALUE) {
-
-            for (int i = 0; i < trits.length; i++) {
-
-                trits[offset + i] = trits[offset + i].not();
-            }
-        }
+        final Trit[] trits2 = getTrits(value);
+        System.arraycopy(trits2, 0, trits, offset, trits2.length);
     }
 
     public Trit[] getTrits() {
 
-        final Trit[] trits = new Trit[NUMBER_OF_TRITS];
+        final Trit[] trits = new Trit[getWidth()];
         getTrits(trits, 0);
 
         return trits;
+    }
+
+    public Tryte lit() {
+
+        return new Tryte(value);
+    }
+
+    public int cmp(final Tryte tryte) {
+
+        return value.compareTo(tryte.value);
+    }
+
+    public Tryte add(final Tryte tryte) {
+
+        return new Tryte(value.add(tryte.value));
+    }
+
+    public Tryte mul(final Tryte tryte) {
+
+        return new Tryte(value.multiply(tryte.value));
+    }
+
+    public Tryte div(final Tryte tryte) {
+
+        if (tryte.value.signum() == 0) {
+
+            return ZERO;
+        }
+
+        return new Tryte(value.divide(tryte.value));
     }
 
     public Tryte not() {
@@ -144,7 +143,7 @@ public class Tryte {
 
         final Trit[] trits1 = getTrits();
         final Trit[] trits2 = tryte.getTrits();
-        for (int i = 0; i < trits1.length; i++) {
+        for (int i = 0; i < trits1.length && i < trits2.length; i++) {
 
             trits1[i] = trits1[i].and(trits2[i]);
         }
@@ -156,7 +155,7 @@ public class Tryte {
 
         final Trit[] trits1 = getTrits();
         final Trit[] trits2 = tryte.getTrits();
-        for (int i = 0; i < trits1.length; i++) {
+        for (int i = 0; i < trits1.length && i < trits2.length; i++) {
 
             trits1[i] = trits1[i].or(trits2[i]);
         }
@@ -164,169 +163,75 @@ public class Tryte {
         return new Tryte(trits1);
     }
 
-    public Tryte add(final Tryte tryte) {
-
-        final long value = getValue() + tryte.getValue();
-        if (value < MIN_VALUE) {
-
-            return new Tryte(value + NUMBER_OF_VALUES);
-
-        } else if (value > MAX_VALUE) {
-
-            return new Tryte(value - NUMBER_OF_VALUES);
-
-        } else {
-
-            return new Tryte(value);
-        }
-    }
-
-    public Tryte addOverflow(final Tryte tryte) {
-
-        final long value = getValue() + tryte.getValue();
-        if (value < MIN_VALUE) {
-
-            return MINUS_ONE;
-
-        } else if (value > MAX_VALUE) {
-
-            return PLUS_ONE;
-
-        } else {
-
-            return ZERO;
-        }
-    }
-
-    public Tryte mul(final Tryte tryte) {
-
-        /*
-        The numbers are represented in [A * e^2 + B * e + C] form with e = MULTIPLICATION_BASE:
-
-        (A1 * e^2 + B1 * e + C1) * (A2 * e^2 + B2 * e + C2) =
-
-        = A1 * A2 * e^4 + A1 * B2 * e^3 + A1 * C2 * e^2 +
-        + B1 * A2 * e^3 + B1 * B2 * e^2 + B1 * C2 * e +
-        + C1 * A2 * e^2 + C1 * B2 * e   + C1 * C2 =
-
-        = (A1 * A2) * e^4 +
-        + (A1 * B2 + B1 * A2) * e^3 +
-        + (A1 * C2 + B1 * B2 + C1 * A2) * e^2 +
-        + (B1 * C2 + C1 * B2) * e +
-        + C1 * C2
-         */
-
-        long multiplicand = getValue();
-        if (multiplicand < ZERO_VALUE) {
-
-            multiplicand = -multiplicand;
-        }
-        final long multiplicandC = multiplicand % MULTIPLICATION_BASE;
-        multiplicand /= MULTIPLICATION_BASE;
-        final long multiplicandB = multiplicand % MULTIPLICATION_BASE;
-        final long multiplicandA = multiplicand / MULTIPLICATION_BASE;
-
-        long multiplier = tryte.getValue();
-        if (multiplier < ZERO_VALUE) {
-
-            multiplier = -multiplier;
-        }
-        final long multiplierC = multiplier % MULTIPLICATION_BASE;
-        multiplier /= MULTIPLICATION_BASE;
-        final long multiplierB = multiplier % MULTIPLICATION_BASE;
-        final long multiplierA = multiplier / MULTIPLICATION_BASE;
-
-        long product0 = ((multiplicandA * multiplierC + multiplicandB * multiplierB + multiplicandC * multiplierA) * MULTIPLICATION_BASE
-                + (multiplicandB * multiplierC + multiplicandC * multiplierB)) * MULTIPLICATION_BASE
-                + (multiplicandC * multiplierC);
-
-        while (product0 > MAX_VALUE) {
-
-            product0 -= NUMBER_OF_VALUES;
-        }
-
-        if ((getValue() < ZERO_VALUE && tryte.getValue() > ZERO_VALUE)
-                || (getValue() > ZERO_VALUE && tryte.getValue() < ZERO_VALUE)) {
-
-            product0 = -product0;
-        }
-
-        return new Tryte(product0);
-    }
-
-    public Tryte mulOverflow(final Tryte tryte) {
-
-        /*
-        See the comment in mul(Tryte) method
-         */
-
-        long multiplicand = getValue();
-        if (multiplicand < ZERO_VALUE) {
-
-            multiplicand = -multiplicand;
-        }
-        final long multiplicandC = multiplicand % MULTIPLICATION_BASE;
-        multiplicand /= MULTIPLICATION_BASE;
-        final long multiplicandB = multiplicand % MULTIPLICATION_BASE;
-        final long multiplicandA = multiplicand / MULTIPLICATION_BASE;
-
-        long multiplier = tryte.getValue();
-        if (multiplier < ZERO_VALUE) {
-
-            multiplier = -multiplier;
-        }
-        final long multiplierC = multiplier % MULTIPLICATION_BASE;
-        multiplier /= MULTIPLICATION_BASE;
-        final long multiplierB = multiplier % MULTIPLICATION_BASE;
-        final long multiplierA = multiplier / MULTIPLICATION_BASE;
-
-        long product0 = ((multiplicandA * multiplierC + multiplicandB * multiplierB + multiplicandC * multiplierA) * MULTIPLICATION_BASE
-                + (multiplicandB * multiplierC + multiplicandC * multiplierB)) * MULTIPLICATION_BASE
-                + (multiplicandC * multiplierC);
-        long product1 = (multiplicandA * multiplierA) * MULTIPLICATION_BASE
-                + (multiplicandA * multiplierB + multiplicandB * multiplierA);
-
-        while (product0 > MAX_VALUE) {
-
-            product0 -= NUMBER_OF_VALUES;
-            product1++;
-        }
-
-        if ((getValue() < ZERO_VALUE && tryte.getValue() > ZERO_VALUE)
-                || (getValue() > ZERO_VALUE && tryte.getValue() < ZERO_VALUE)) {
-
-            product1 = -product1;
-        }
-
-        return new Tryte(product1);
-    }
-
-    public Tryte div(final Tryte tryte) {
-
-        if (tryte.getValue() == ZERO_VALUE) {
-
-            throw new IllegalArgumentException("Division by zero");
-        }
-
-        return new Tryte(getValue() / tryte.getValue());
-    }
-
     @Override
     public String toString() {
 
-        return String.valueOf(getValue());
+        return String.valueOf(value);
     }
 
     @Override
     public int hashCode() {
 
-        return ((int)getValue()) ^ ((int)getValue() >> 32);
+        return value.hashCode();
     }
 
     @Override
     public boolean equals(final Object obj) {
 
-        return obj instanceof Tryte
-                && getValue() == ((Tryte)obj).getValue();
+        return value.equals(obj);
+    }
+
+    private static BigInteger getBigInteger(final Trit[] trits, final int offset, final int length) {
+
+        if (length < 1) {
+
+            throw new IllegalArgumentException("Illegal length: " + length);
+        }
+
+        BigInteger value = BigInteger.ZERO;
+        for (int i = length; i-- > 0; ) {
+
+            value = value.multiply(RADIX).add(BigInteger.valueOf(trits[offset + i].getValue()));
+        }
+
+        return value;
+    }
+
+    private static Trit[] getTrits(final BigInteger value) {
+
+        if (value.signum() == 0) {
+
+            return new Trit[] {Trit.UNKNOWN};
+        }
+
+        final List<Trit> trits = new LinkedList<>();
+
+        BigInteger value2 = value;
+        if (value2.signum() < 0) {
+
+            value2 = value2.negate();
+        }
+
+        while (value2.signum() != 0) {
+
+            byte remainder = value2.mod(RADIX).byteValueExact();
+            value2.divide(RADIX);
+            if (remainder > Trit.MAX_VALUE) {
+
+                remainder -= Trit.RADIX;
+                value2.add(BigInteger.ONE);
+            }
+            trits.add(Trit.getTrit(remainder));
+        }
+
+        if (value.signum() < 0) {
+
+            for (int i = 0; i < trits.size(); i++) {
+
+                trits.set(i, trits.get(i).not());
+            }
+        }
+
+        return trits.toArray(new Trit[trits.size()]);
     }
 }

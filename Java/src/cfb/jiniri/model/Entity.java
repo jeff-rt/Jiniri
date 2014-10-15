@@ -1,6 +1,7 @@
 package cfb.jiniri.model;
 
 import cfb.jiniri.operation.Conductor;
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 
 /**
@@ -10,15 +11,15 @@ public abstract class Entity {
 
     public static final Tryte SEED_ENTITY_TYPE = Tryte.ZERO;
 
-    protected final Tryte[] state;
+    protected final Trit[] state;
 
-    protected Entity(final Tryte[] state) {
+    protected Entity(final Trit[] state) {
 
-        this.state = new Tryte[state.length];
+        this.state = new Trit[state.length];
         System.arraycopy(state, 0, this.state, 0, state.length);
     }
 
-    public Tryte[] getState() {
+    public Trit[] getState() {
 
         return state;
     }
@@ -28,5 +29,5 @@ public abstract class Entity {
         return state.length;
     }
 
-    public abstract void react(final Tryte[] effectData, final Tryte[] scratchpad, final Conductor conductor);
+    public abstract void react(final Trit[] effectData, final Trit[] scratchpad, final Conductor conductor);
 }

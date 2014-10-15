@@ -9,14 +9,14 @@ public class Variable {
 
     private Tryte tryte;
 
-    public Variable() {
+    public Variable(final int width) {
 
-        this(Tryte.ZERO);
+        tryte = new Tryte(width, Tryte.ZERO);
     }
 
     public Variable(final Tryte tryte) {
 
-        set(tryte);
+        this.tryte = tryte;
     }
 
     public Tryte get() {
@@ -26,6 +26,6 @@ public class Variable {
 
     public void set(final Tryte tryte) {
 
-        this.tryte = tryte;
+        this.tryte = new Tryte(get().getWidth(), tryte);
     }
 }

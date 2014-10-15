@@ -1,71 +1,67 @@
 package cfb.jiniri.operation;
 
-import cfb.jiniri.type.Multiplet;
+import cfb.jiniri.ternary.Tryte;
+import cfb.jiniri.type.Variable;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
 public class Functions {
 
-    public static Multiplet lit(final Multiplet multiplet) {
+    public static Variable lit(final Variable variable) {
 
-        return multiplet.clone();
+        return new Variable(variable.get().lit());
     }
 
-    public static Multiplet cmp(final Multiplet multiplet1, final Multiplet multiplet2,
-                                final Multiplet multiplet3, final Multiplet multiplet4, final Multiplet multiplet5) {
+    public static Variable cmp(final Variable variable1, final Variable variable2,
+                               final Variable variable3, final Variable variable4, final Variable variable5) {
 
-        if (multiplet3.getWidth() != multiplet4.getWidth() || multiplet3.getWidth() != multiplet5.getWidth()) {
+        switch (variable1.get().cmp(variable2.get())) {
 
-            throw new RuntimeException("Non-matching widths of operand 3, operand 4 and operand 5");
-        }
+            case Tryte.LESS: {
 
-        switch (multiplet1.cmp(multiplet2)) {
-
-            case Multiplet.LESS: {
-
-                return multiplet3.clone();
+                return new Variable(variable3.get());
             }
 
-            case Multiplet.GREATER: {
+            case Tryte.GREATER: {
 
-                return multiplet5.clone();
+                return new Variable(variable5.get());
             }
 
             default: {
 
-                return multiplet4.clone();
+                return new Variable(variable4.get());
             }
         }
     }
 
-    public static Multiplet add(final Multiplet multiplet1, final Multiplet multiplet2) {
+    public static Variable add(final Variable variable1, final Variable variable2) {
 
-        return multiplet1.clone().add(multiplet2);
+        return new Variable(variable1.get().add(variable2.get()));
     }
 
-    public static Multiplet mul(final Multiplet multiplet1, final Multiplet multiplet2) {
+    public static Variable mul(final Variable variable1, final Variable variable2) {
 
-        return multiplet1.clone().mul(multiplet2);
+        return new Variable(variable1.get().mul(variable2.get()));
     }
 
-    public static Multiplet div(final Multiplet multiplet1, final Multiplet multiplet2) {
+    public static Variable div(final Variable variable1, final Variable variable2) {
 
-        return multiplet1.clone().div(multiplet2);
+        return new Variable(variable1.get().div(variable2.get()));
     }
 
-    public static Multiplet not(final Multiplet multiplet) {
+    public static Variable not(final Variable variable) {
 
-        return multiplet.clone().not();
+        return new Variable(variable.get().not());
     }
 
-    public static Multiplet and(final Multiplet multiplet1, final Multiplet multiplet2) {
+    public static Variable and(final Variable variable1, final Variable variable2) {
 
-        return multiplet1.clone().and(multiplet2);
+        return new Variable(variable1.get().and(variable2.get()));
     }
 
-    public static Multiplet or(final Multiplet multiplet1, final Multiplet multiplet2) {
+    public static Variable or(final Variable variable1, final Variable variable2) {
 
-        return multiplet1.clone().or(multiplet2);
+        return new Variable(variable1.get().or(variable2.get()));
     }
 }

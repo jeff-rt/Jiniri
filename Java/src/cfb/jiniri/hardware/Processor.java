@@ -16,10 +16,6 @@ import java.util.concurrent.*;
  */
 public class Processor {
 
-    private static final Tryte CREATION = Tryte.MINUS_ONE;
-    private static final Tryte EVOLUTION = Tryte.ZERO;
-    private static final Tryte DESTRUCTION = Tryte.PLUS_ONE;
-
     private static final class EntityEnvelope {
 
         static final Trit AWAITING = Trit.FALSE;
@@ -33,7 +29,7 @@ public class Processor {
         final Set<Tryte> environmentIds;
         final SortedSet<Effect> effects;
 
-        EntityEnvelope(final Tryte type, final Entity entity, final Tryte[] data) {
+        EntityEnvelope(final Tryte type, final Entity entity, final Trit[] data) {
 
             this.type = type;
             this.entity = entity;
@@ -57,41 +53,27 @@ public class Processor {
 
             int i = 0;
 
-            final Tryte type = trytes[i];
-            i++;
+            final Tryte type = trytes[i++];
 
-            final Tryte[] state = new Tryte[(int)trytes[i].getValue()];
-            i++;
-            System.arraycopy(trytes, i, state, 0, state.length);
-            i += state.length;
+            final Trit[] state = trytes[i++].getTrits();
 
             final EntityEnvelope entityEnvelope = new EntityEnvelope(type, singularity.createEntity(type, state));
 
-            entityEnvelope.stage = trytes[i].getTrits()[0];
-            i++;
+            entityEnvelope.stage = trytes[i++].getTrits()[0];
 
-            int numberOfEnvironments = (int)trytes[i].getValue();
-            i++;
+            int numberOfEnvironments = trytes[i++].getIntValue();
             while (numberOfEnvironments-- > 0) {
 
-                entityEnvelope.environmentIds.add(trytes[i]);
-                i++;
+                entityEnvelope.environmentIds.add(trytes[i++]);
             }
 
-            int numberOfEffects = (int)trytes[i].getValue();
-            i++;
+            int numberOfEffects = trytes[i++].getIntValue();
             while (numberOfEffects-- > 0) {
 
-                final Tryte[] data = new Tryte[(int)trytes[i].getValue()];
-                i++;
-                System.arraycopy(trytes, i, data, 0, data.length);
-                i += data.length;
+                final Trit[] data = trytes[i++].getTrits();
 
-                final Tryte earliestTime = trytes[i];
-                i++;
-
-                final Tryte latestTime = trytes[i];
-                i++;
+                final Tryte earliestTime = trytes[i++];
+                final Tryte latestTime = trytes[i++];
 
                 entityEnvelope.effects.add(new Effect(data, earliestTime, latestTime));
             }
@@ -105,13 +87,9 @@ public class Processor {
 
             trytes.add(type);
 
-            trytes.add(new Tryte(entity.getStateSize()));
-            for (final Tryte tryte : entity.getState()) {
+            trytes.add(new Tryte(entity.getState()));
 
-                trytes.add(tryte);
-            }
-
-            trytes.add(new Tryte(stage));
+            trytes.add(new Tryte(stage.getValue()));
 
             trytes.add(new Tryte(environmentIds.size()));
             for (final Tryte environmentId : environmentIds) {
@@ -122,11 +100,7 @@ public class Processor {
             trytes.add(new Tryte(effects.size()));
             for (final Effect effect : effects) {
 
-                trytes.add(new Tryte(effect.getDataSize()));
-                for (final Tryte tryte : effect.getData()) {
-
-                    trytes.add(tryte);
-                }
+                trytes.add(new Tryte(effect.getData()));
 
                 trytes.add(effect.getEarliestTime());
                 trytes.add(effect.getLatestTime());
@@ -211,14 +185,17 @@ public class Processor {
 
         storage.beginStoring();
 
-        storage.continueStoring(time);
+        storage.continueStoring(time.getTrits());
 
-        storage.continueStoring(new Tryte(entityEnvelopes.size()));
+        storage.continueStoring(new Tryte(entityEnvelopes.size()).getTrits());
         for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
 
             final Tryte[] trytes = entityEnvelope.getTrytes();
-            storage.continueStoring(new Tryte(trytes.length));
-            storage.continueStoring(trytes);
+            storage.continueStoring((new Tryte(trytes.length)).getTrits());
+            for (final Tryte tryte : trytes) {
+
+                storage.continueStoring(tryte.getTrits());
+            }
         }
 
         storage.endStoring();
@@ -228,18 +205,17 @@ public class Processor {
 
         storage.beginLoading();
 
-        final Tryte[] bufferForTrytes = new Tryte[1];
-        storage.continueLoading(bufferForTrytes);
-        time = bufferForTrytes[0];
+        time = new Tryte(storage.continueLoading());
 
-        storage.continueLoading(bufferForTrytes);
-        int numberOfEntityEnvelopes = (int)bufferForTrytes[0].getValue();
+        int numberOfEntityEnvelopes = new Tryte(storage.continueLoading()).getIntValue();
         while (numberOfEntityEnvelopes-- > 0) {
 
-            storage.continueLoading(bufferForTrytes);
-            final Tryte[] bufferForTrytes2 = new Tryte[(int)bufferForTrytes[0].getValue()];
-            storage.continueLoading(bufferForTrytes2);
-            final EntityEnvelope entityEnvelope = EntityEnvelope.getEntityEnvelope(bufferForTrytes2, singularity);
+            final Tryte[] trytes = new Tryte[new Tryte(storage.continueLoading()).getIntValue()];
+            for (int i = 0; i < trytes.length; i++) {
+
+                trytes[i] = new Tryte(storage.continueLoading());
+            }
+            final EntityEnvelope entityEnvelope = EntityEnvelope.getEntityEnvelope(trytes, singularity);
             entityEnvelopes.put(entityEnvelope.entity, entityEnvelope);
         }
 
@@ -283,23 +259,24 @@ public class Processor {
 
                         entityEnvelope.stage = EntityEnvelope.EXISTING;
 
-                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, CREATION)));
-
                     } else if (entityEnvelope.stage.equals(EntityEnvelope.DECAYING)) {
 
                         entityEnvelopes.remove(entityEnvelope.entity);
                         for (final Tryte environmentId : entityEnvelope.environmentIds) {
 
-                            environments.get(environmentId).exclude(entityEnvelope.entity);
-                        }
+                            final Environment environment = environments.get(environmentId);
+                            environment.exclude(entityEnvelope.entity);
+                            if (environment.getEntities().isEmpty()) {
 
-                        process(entityEnvelope, new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, DESTRUCTION)));
+                                environments.remove(environmentId);
+                            }
+                        }
                     }
                 }
 
                 time = time.add(Tryte.PLUS_ONE);
                 final Environment borderEnvironment = environments.get(Environment.BORDER_ENVIRONMENT);
-                final Effect evolutionEffect = new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, EVOLUTION, time));
+                final Effect evolutionEffect = new Effect(Converter.combine(Environment.BORDER_ENVIRONMENT, time, new Tryte(System.currentTimeMillis())));
                 for (final Entity entity : borderEnvironment.getEntities()) {
 
                     entityEnvelopes.get(entity).effects.add(evolutionEffect);
@@ -334,7 +311,7 @@ public class Processor {
                                 while (true) {
 
                                     final Effect effect = entityEnvelope.effects.first();
-                                    if (effect.getEarliestTime().getValue() <= time.getValue()) {
+                                    if (effect.getEarliestTime().getLongValue() <= time.getLongValue()) {
 
                                         effects.add(effect);
                                         entityEnvelope.effects.remove(effect);
@@ -390,7 +367,7 @@ public class Processor {
         }
     }
 
-    void create(final Tryte type, final Tryte[] data) {
+    void create(final Tryte type, final Trit[] data) {
 
         deferredCalls.offer(() -> {
 
@@ -407,21 +384,21 @@ public class Processor {
         });
     }
 
-    void affect(final Tryte environmentId, final Tryte[] data,
+    void affect(final Tryte environmentId, final Trit[] data,
                 final Tryte power, final Tryte delay, final Tryte duration) {
 
-        (delay.getValue() == Tryte.ZERO_VALUE ? immediateCalls : deferredCalls).offer(() -> {
+        (delay.getLongValue() == 0 ? immediateCalls : deferredCalls).offer(() -> {
 
             final Environment environment = environments.get(environmentId);
             if (environment != null) {
 
                 final Effect effect = new Effect(data,
-                        new Tryte(new Tryte(time.getValue() + delay.getValue())),
-                        new Tryte(new Tryte(time.getValue() + duration.getValue())));
-                int numberOfAffectedEntities = 0;
+                        new Tryte(time.getLongValue() + delay.getLongValue()),
+                        new Tryte(time.getLongValue() + duration.getLongValue()));
+                long numberOfAffectedEntities = 0;
                 for (final Entity affectedEntity : environment.getEntities()) {
 
-                    if (power.getValue() > 0 && ++numberOfAffectedEntities > power.getValue()) {
+                    if (power.getLongValue() > 0 && ++numberOfAffectedEntities > power.getLongValue()) {
 
                         break;
                     }

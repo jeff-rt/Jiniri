@@ -1,72 +1,86 @@
 package cfb.jiniri.util;
 
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
-import cfb.jiniri.type.Multiplet;
+
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
 public class Converter {
 
-    public static final int TRYTE_SIZE = 6;
+    public static final int NUMBER_OF_BITS = 2;
+    private static final int MASK = (1 << NUMBER_OF_BITS) - 1;
 
-    public static byte[] getBytes(final Tryte[] trytes) {
+    public static byte[] getBytes(final Trit[] trits) {
 
-        if (trytes == null) {
+        final byte[] bytes = new byte[(trits.length * NUMBER_OF_BITS + NUMBER_OF_BITS + Byte.SIZE - 1) / Byte.SIZE];
 
-            return null;
-        }
-
-        final byte[] bytes = new byte[trytes.length * TRYTE_SIZE];
         int i = 0;
-        for (final Tryte tryte : trytes) {
+        while (i < trits.length) {
 
-            long value = tryte.getValue() - Tryte.MIN_VALUE;
-            bytes[i++] = (byte)value;
-            value >>= 8;
-            bytes[i++] = (byte)value;
-            value >>= 8;
-            bytes[i++] = (byte)value;
-            value >>= 8;
-            bytes[i++] = (byte)value;
-            value >>= 8;
-            bytes[i++] = (byte)value;
-            value >>= 8;
-            bytes[i++] = (byte)value;
+            if (trits[i] == Trit.TRUE) {
+
+                bytes[(i * NUMBER_OF_BITS + Byte.SIZE - 1) / Byte.SIZE - 1] |= (1 << ((i & MASK) * NUMBER_OF_BITS));
+
+            } else if (trits[i] == Trit.FALSE) {
+
+                bytes[(i * NUMBER_OF_BITS + Byte.SIZE - 1) / Byte.SIZE - 1] |= (2 << ((i & MASK) * NUMBER_OF_BITS));
+            }
+
+            i++;
         }
+        bytes[(i * NUMBER_OF_BITS + Byte.SIZE - 1) / Byte.SIZE - 1] |= (3 << ((i & MASK) * NUMBER_OF_BITS));
 
         return bytes;
     }
 
-    public static Tryte[] getTrytes(final byte[] bytes) {
+    public static Trit[] getTrits(final byte[] bytes) {
 
-        if (bytes == null) {
+        final List<Trit> trits = new LinkedList<>();
 
-            return null;
+        int i = 0;
+        while (true) {
+
+            switch ((bytes[i / Byte.SIZE] >> ((i & MASK) * NUMBER_OF_BITS)) & MASK) {
+
+                case 0: {
+
+                    trits.add(Trit.UNKNOWN);
+
+                } break;
+
+                case 1: {
+
+                    trits.add(Trit.TRUE);
+
+                } break;
+
+                case 2: {
+
+                    trits.add(Trit.FALSE);
+
+                } break;
+
+                default: {
+
+                    return trits.toArray(new Trit[trits.size()]);
+                }
+            }
         }
-
-        if (bytes.length % TRYTE_SIZE != 0) {
-
-            throw new IllegalArgumentException("Illegal number of bytes: " + bytes.length);
-        }
-
-        final Tryte[] trytes = new Tryte[bytes.length / TRYTE_SIZE];
-        for (int i = 0; i < trytes.length; i++) {
-
-            final long value = (bytes[i * TRYTE_SIZE] & 0xFFL)
-                    | (((bytes[i * TRYTE_SIZE + 1] & 0xFFL)) << 8)
-                    | (((bytes[i * TRYTE_SIZE + 2] & 0xFFL)) << 16)
-                    | (((bytes[i * TRYTE_SIZE + 3] & 0xFFL)) << 24)
-                    | (((bytes[i * TRYTE_SIZE + 4] & 0xFFL)) << 32)
-                    | (((bytes[i * TRYTE_SIZE + 5] & 0xFFL)) << 40);
-            trytes[i] = new Tryte(value + Tryte.MIN_VALUE);
-        }
-
-        return trytes;
     }
 
-    public static Tryte[] combine(final Tryte... trytes) {
+    public static Trit[] combine(final Tryte... trytes) {
 
-        return trytes;
+        final List<Trit> trits = new LinkedList<>();
+        for (final Tryte tryte : trytes) {
+
+            trits.addAll(Arrays.asList(tryte.getTrits()));
+        }
+
+        return trits.toArray(new Trit[trits.size()]);
     }
 }

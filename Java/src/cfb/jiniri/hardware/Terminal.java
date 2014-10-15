@@ -1,5 +1,6 @@
 package cfb.jiniri.hardware;
 
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 
 /**
@@ -7,11 +8,11 @@ import cfb.jiniri.ternary.Tryte;
  */
 public interface Terminal {
 
-    public void join(final Tryte[] channel);
+    public void join(final Tryte channel);
 
-    public void leave(final Tryte[] channel);
+    public void leave(final Tryte channel);
 
-    public void send(final Tryte[] channel, final Tryte[] message);
+    public void send(final Tryte channel, final Trit[] message);
 
-    public Tryte[] receive(final Tryte[] channel);
+    public Trit[] receive(final Tryte channel);
 }

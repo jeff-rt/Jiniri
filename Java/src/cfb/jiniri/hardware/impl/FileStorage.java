@@ -1,6 +1,7 @@
 package cfb.jiniri.hardware.impl;
 
 import cfb.jiniri.hardware.Storage;
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.util.Converter;
 
@@ -9,6 +10,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * (c) 2014 Come-from-Beyond
@@ -58,7 +61,7 @@ public class FileStorage implements Storage {
     }
 
     @Override
-    public void continueStoring(final Tryte... trytes) {
+    public void continueStoring(final Trit[] trits) {
 
         if (stage != Stage.STORING) {
 
@@ -67,7 +70,7 @@ public class FileStorage implements Storage {
 
         try {
 
-            channel.write(ByteBuffer.wrap(Converter.getBytes(trytes)));
+            channel.write(ByteBuffer.wrap(Converter.getBytes(trits)));
 
         } catch (final IOException e) {
 
@@ -118,7 +121,7 @@ public class FileStorage implements Storage {
     }
 
     @Override
-    public void continueLoading(final Tryte[] bufferForTrytes) {
+    public Trit[] continueLoading() {
 
         if (stage != Stage.LOADING) {
 
@@ -127,18 +130,24 @@ public class FileStorage implements Storage {
 
         try {
 
-            final ByteBuffer buffer = ByteBuffer.allocate(bufferForTrytes.length * Converter.TRYTE_SIZE);
-            channel.read(buffer);
-            buffer.flip();
+            final List<Trit> trits = new LinkedList<>();
 
-            final byte[] fragment = new byte[Converter.TRYTE_SIZE];
-            for (int i = 0; i < bufferForTrytes.length; i++) {
+            final ByteBuffer buffer = ByteBuffer.allocate(1);
+            while (true) {
 
-                for (int j = 0; j < fragment.length; j++) {
+                buffer.clear();
+                channel.read(buffer);
+                buffer.flip();
+                final Trit[] newTrits = Converter.getTrits(new byte[] {buffer.get()});
+                for (final Trit trit : newTrits) {
 
-                    fragment[j] = buffer.get();
+                    trits.add(trit);
                 }
-                bufferForTrytes[i] = Converter.getTrytes(fragment)[0];
+
+                if (newTrits.length < Byte.SIZE / Converter.NUMBER_OF_BITS) {
+
+                    return trits.toArray(new Trit[trits.size()]);
+                }
             }
 
         } catch (final IOException e) {

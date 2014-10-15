@@ -1,5 +1,6 @@
 package cfb.jiniri.model;
 
+import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 
 /**
@@ -9,5 +10,5 @@ public interface Singularity {
 
     public Entity createEntity(final Tryte type);
 
-    public Entity createEntity(final Tryte type, final Tryte[] state);
+    public Entity createEntity(final Tryte type, final Trit[] state);
 }
