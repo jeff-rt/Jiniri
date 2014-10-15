@@ -215,11 +215,11 @@ public class Tryte {
         while (value2.signum() != 0) {
 
             byte remainder = value2.mod(RADIX).byteValueExact();
-            value2.divide(RADIX);
+            value2 = value2.divide(RADIX);
             if (remainder > Trit.MAX_VALUE) {
 
                 remainder -= Trit.RADIX;
-                value2.add(BigInteger.ONE);
+                value2 = value2.add(BigInteger.ONE);
             }
             trits.add(Trit.getTrit(remainder));
         }

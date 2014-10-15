@@ -3,7 +3,7 @@ package cfb.jiniri.util;
 import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -78,7 +78,7 @@ public class Converter {
         final List<Trit> trits = new LinkedList<>();
         for (final Tryte tryte : trytes) {
 
-            trits.addAll(Arrays.asList(tryte.getTrits()));
+            Collections.addAll(trits, tryte.getTrits());
         }
 
         return trits.toArray(new Trit[trits.size()]);

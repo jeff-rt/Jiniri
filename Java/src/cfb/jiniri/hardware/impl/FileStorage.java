@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -138,10 +139,7 @@ public class FileStorage implements Storage {
                 channel.read(buffer);
                 buffer.flip();
                 final Trit[] newTrits = Converter.getTrits(new byte[] {buffer.get()});
-                for (final Trit trit : newTrits) {
-
-                    trits.add(trit);
-                }
+                Collections.addAll(trits, Converter.getTrits(new byte[] {buffer.get()}));
 
                 if (newTrits.length < Byte.SIZE / Converter.NUMBER_OF_BITS) {
 

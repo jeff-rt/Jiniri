@@ -10,6 +10,7 @@ import cfb.jiniri.util.Converter;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * (c) 2014 Come-from-Beyond
@@ -82,10 +83,7 @@ public class Processor {
             trytes.add(new Tryte(entity.getState()));
 
             trytes.add(new Tryte(environmentIds.size()));
-            for (final Tryte environmentId : environmentIds) {
-
-                trytes.add(environmentId);
-            }
+            trytes.addAll(environmentIds.stream().collect(Collectors.toList()));
 
             trytes.add(new Tryte(effects.size()));
             for (final Effect effect : effects) {
@@ -286,13 +284,10 @@ public class Processor {
 
                 } while (!immediateCalls.isEmpty());
 
-                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
-
-                    if (entityEnvelope.environmentIds.isEmpty() && entityEnvelope.effects.isEmpty()) {
-
-                        salvage(entityEnvelope);
-                    }
-                }
+                entityEnvelopes.values().stream()
+                        .filter(entityEnvelope -> entityEnvelope.environmentIds.isEmpty()
+                                && entityEnvelope.effects.isEmpty())
+                        .forEach(this::salvage);
             }
         });
     }

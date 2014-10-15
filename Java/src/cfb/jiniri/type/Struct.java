@@ -44,12 +44,12 @@ public class Struct {
     public void fill(final Trit[] trits, final int offset) {
 
         int i = 0;
-        for (int j = 0; j < variables.length; j++) {
+        for (final Variable[] variables : this.variables) {
 
-            for (int k = 0; k < variables[j].length; k++) {
+            for (final Variable variable : variables) {
 
-                variables[j][k].set(new Tryte(trits, offset + i, variables[j][k].get().getWidth()));
-                i += variables[j][k].get().getWidth();
+                variable.set(new Tryte(trits, offset + i, variable.get().getWidth()));
+                i += variable.get().getWidth();
             }
         }
     }
