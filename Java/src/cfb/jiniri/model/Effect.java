@@ -50,11 +50,11 @@ public class Effect implements Comparable<Effect> {
     @Override
     public int compareTo(final Effect effect) {
 
-        if (getEarliestTime().cmp(effect.getEarliestTime()) == Tryte.LESS) {
+        if (getEarliestTime().cmp(effect.getEarliestTime()).getIntValue() < 0) {
 
             return -1;
 
-        } else if (getEarliestTime().cmp(effect.getEarliestTime()) == Tryte.GREATER) {
+        } else if (getEarliestTime().cmp(effect.getEarliestTime()).getIntValue() > 0) {
 
             return 1;
 

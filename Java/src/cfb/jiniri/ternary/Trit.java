@@ -72,9 +72,57 @@ public class Trit {
                 : getValue() == TRUE_VALUE ? FALSE : TRUE;
     }
 
-    public Trit and(final Trit trit) {
+    public Trit sum(final Trit trit) {
 
-        return getValue() > trit.getValue() ? trit : this;
+        switch (getValue()) {
+
+            case FALSE_VALUE: {
+
+                switch (trit.getValue()) {
+
+                    case FALSE_VALUE: {
+
+                        return TRUE;
+                    }
+
+                    case TRUE_VALUE: {
+
+                        return UNKNOWN;
+                    }
+
+                    default: {
+
+                        return FALSE;
+                    }
+                }
+            }
+
+            case TRUE_VALUE: {
+
+                switch (trit.getValue()) {
+
+                    case FALSE_VALUE: {
+
+                        return UNKNOWN;
+                    }
+
+                    case TRUE_VALUE: {
+
+                        return FALSE;
+                    }
+
+                    default: {
+
+                        return TRUE;
+                    }
+                }
+            }
+
+            default: {
+
+                return trit;
+            }
+        }
     }
 
     public Trit or(final Trit trit) {
@@ -82,58 +130,9 @@ public class Trit {
         return getValue() < trit.getValue() ? trit : this;
     }
 
-    public Trit add(final Trit trit) {
+    public Trit and(final Trit trit) {
 
-        final int value = getValue() + trit.getValue();
-        if (value < MIN_VALUE) {
-
-            return getTrit((byte)(value + RADIX));
-
-        } else if (value > MAX_VALUE) {
-
-            return getTrit((byte)(value - RADIX));
-
-        } else {
-
-            return getTrit((byte)value);
-        }
-    }
-
-    public Trit addOverflow(final Trit trit) {
-
-        final int value = getValue() + trit.getValue();
-        if (value < MIN_VALUE) {
-
-            return MINUS_ONE;
-
-        } else if (value > MAX_VALUE) {
-
-            return PLUS_ONE;
-
-        } else {
-
-            return ZERO;
-        }
-    }
-
-    public Trit mul(final Trit trit) {
-
-        return getTrit((byte)(getValue() * trit.getValue()));
-    }
-
-    public Trit mulOverflow(final Trit trit) {
-
-        return ZERO;
-    }
-
-    public Trit div(final Trit trit) {
-
-        if (trit.getValue() == ZERO_VALUE) {
-
-            throw new IllegalArgumentException("Division by zero");
-        }
-
-        return getTrit((byte)(getValue() / trit.getValue()));
+        return getValue() > trit.getValue() ? trit : this;
     }
 
     @Override

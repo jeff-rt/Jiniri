@@ -13,10 +13,6 @@ public class Tryte {
     public static final Tryte ZERO = new Tryte(BigInteger.ZERO);
     public static final Tryte PLUS_ONE = new Tryte(BigInteger.ONE);
 
-    public static final int LESS = -1;
-    public static final int EQUAL = 0;
-    public static final int GREATER = 1;
-
     private static final BigInteger RADIX = BigInteger.valueOf(Trit.RADIX);
 
     private final int width;
@@ -98,14 +94,55 @@ public class Tryte {
         return trits;
     }
 
-    public Tryte lit() {
+    public Tryte cmp(final Tryte tryte) {
+
+        return new Tryte(value.compareTo(tryte.value));
+    }
+
+    public Tryte id() {
 
         return new Tryte(value);
     }
 
-    public int cmp(final Tryte tryte) {
+    public Tryte neg() {
 
-        return value.compareTo(tryte.value);
+        return new Tryte(value.negate());
+    }
+
+    public Tryte sum(final Tryte tryte) {
+
+        final Trit[] trits1 = getTrits();
+        final Trit[] trits2 = tryte.getTrits();
+        for (int i = 0; i < trits1.length && i < trits2.length; i++) {
+
+            trits1[i] = trits1[i].sum(trits2[i]);
+        }
+
+        return new Tryte(trits1);
+    }
+
+    public Tryte or(final Tryte tryte) {
+
+        final Trit[] trits1 = getTrits();
+        final Trit[] trits2 = tryte.getTrits();
+        for (int i = 0; i < trits1.length && i < trits2.length; i++) {
+
+            trits1[i] = trits1[i].or(trits2[i]);
+        }
+
+        return new Tryte(trits1);
+    }
+
+    public Tryte and(final Tryte tryte) {
+
+        final Trit[] trits1 = getTrits();
+        final Trit[] trits2 = tryte.getTrits();
+        for (int i = 0; i < trits1.length && i < trits2.length; i++) {
+
+            trits1[i] = trits1[i].and(trits2[i]);
+        }
+
+        return new Tryte(trits1);
     }
 
     public Tryte add(final Tryte tryte) {
@@ -122,45 +159,10 @@ public class Tryte {
 
         if (tryte.value.signum() == 0) {
 
-            return ZERO;
+            return ZERO; // TODO: Replace with MIN/MAX
         }
 
         return new Tryte(value.divide(tryte.value));
-    }
-
-    public Tryte not() {
-
-        final Trit[] trits = getTrits();
-        for (int i = 0; i < trits.length; i++) {
-
-            trits[i] = trits[i].not();
-        }
-
-        return new Tryte(trits);
-    }
-
-    public Tryte and(final Tryte tryte) {
-
-        final Trit[] trits1 = getTrits();
-        final Trit[] trits2 = tryte.getTrits();
-        for (int i = 0; i < trits1.length && i < trits2.length; i++) {
-
-            trits1[i] = trits1[i].and(trits2[i]);
-        }
-
-        return new Tryte(trits1);
-    }
-
-    public Tryte or(final Tryte tryte) {
-
-        final Trit[] trits1 = getTrits();
-        final Trit[] trits2 = tryte.getTrits();
-        for (int i = 0; i < trits1.length && i < trits2.length; i++) {
-
-            trits1[i] = trits1[i].or(trits2[i]);
-        }
-
-        return new Tryte(trits1);
     }
 
     @Override
