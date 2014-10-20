@@ -94,21 +94,6 @@ public class Tryte {
         return trits;
     }
 
-    public Tryte cmp(final Tryte tryte) {
-
-        return new Tryte(value.compareTo(tryte.value));
-    }
-
-    public Tryte id() {
-
-        return new Tryte(value);
-    }
-
-    public Tryte neg() {
-
-        return new Tryte(value.negate());
-    }
-
     public Tryte sum(final Tryte tryte) {
 
         final Trit[] trits1 = getTrits();
@@ -145,9 +130,19 @@ public class Tryte {
         return new Tryte(trits1);
     }
 
+    public Tryte cmp(final Tryte tryte) {
+
+        return new Tryte(value.compareTo(tryte.value));
+    }
+
     public Tryte add(final Tryte tryte) {
 
         return new Tryte(value.add(tryte.value));
+    }
+
+    public Tryte sub(final Tryte tryte) {
+
+        return new Tryte(value.subtract(tryte.value));
     }
 
     public Tryte mul(final Tryte tryte) {
@@ -159,10 +154,21 @@ public class Tryte {
 
         if (tryte.value.signum() == 0) {
 
-            return ZERO; // TODO: Replace with MIN/MAX
+            return ZERO;
         }
 
         return new Tryte(value.divide(tryte.value));
+    }
+
+    public Tryte mod(final Tryte tryte) {
+
+        if (tryte.value.signum() == 0) {
+
+            return ZERO;
+        }
+
+        return new Tryte((tryte.value.signum() > 0 ? value : value.negate())
+                .mod(tryte.value.signum() > 0 ? tryte.value : tryte.value.negate()));
     }
 
     @Override
