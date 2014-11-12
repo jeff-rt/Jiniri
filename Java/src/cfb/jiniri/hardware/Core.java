@@ -2,14 +2,14 @@ package cfb.jiniri.hardware;
 
 import cfb.jiniri.model.Effect;
 import cfb.jiniri.model.Entity;
-import cfb.jiniri.operation.Conductor;
+import cfb.jiniri.operation.Routines;
 import cfb.jiniri.ternary.Trit;
 import cfb.jiniri.ternary.Tryte;
 
 /**
  * (c) 2014 Come-from-Beyond
  */
-public class Core implements Conductor {
+public class Core implements Routines {
 
     private final Processor processor;
 
@@ -43,12 +43,20 @@ public class Core implements Conductor {
     }
 
     @Override
-    public void create(final Tryte type, final Tryte pointer, final Tryte size) {
+    public void halt() {
 
-        final Trit[] data = new Trit[size.getIntValue()];
-        System.arraycopy(scratchpad, pointer.getIntValue(), data, 0, data.length);
+        throw new RuntimeException("Halt");
+    }
 
-        processor.create(type, data);
+    @Override
+    public void spawn(final Tryte entityDomain,
+                      final Class entityClass, final Tryte maxEffectDataAndScratchpadSize,
+                      final Tryte effectDataPointer, final Tryte effectDataSize) {
+
+        final Trit[] data = new Trit[effectDataSize.getIntValue()];
+        System.arraycopy(scratchpad, effectDataPointer.getIntValue(), data, 0, data.length);
+
+        processor.create(entityDomain, entityClass, maxEffectDataAndScratchpadSize, data);
     }
 
     @Override
@@ -58,36 +66,26 @@ public class Core implements Conductor {
     }
 
     @Override
-    public void get(final Tryte type) {
+    public void affect(final Tryte environment,
+                       final Tryte effectRange, final Tryte effectEffectiveness,
+                       final Tryte effectDelay, final Tryte effectDuration,
+                       final Tryte effectDataPointer, final Tryte effectDataSize) {
+
+        final Trit[] data = new Trit[effectDataSize.getIntValue()];
+        System.arraycopy(scratchpad, effectDataPointer.getIntValue(), data, 0, data.length);
+
+        processor.affect(environment, effectRange, effectEffectiveness, effectDelay, effectDuration, data);
     }
 
     @Override
-    public void add(final Tryte pointer, final Tryte size, final Tryte environmentId) {
+    public void join(final Tryte environment) {
+
+        processor.include(entity, environment);
     }
 
     @Override
-    public void remove(final Tryte type) {
-    }
+    public void leave(final Tryte environment) {
 
-    @Override
-    public void affect(final Tryte environmentId, final Tryte pointer, final Tryte size,
-                       final Tryte power, final Tryte delay, final Tryte duration) {
-
-        final Trit[] data = new Trit[size.getIntValue()];
-        System.arraycopy(scratchpad, pointer.getIntValue(), data, 0, data.length);
-
-        processor.affect(environmentId, data, delay, duration, power);
-    }
-
-    @Override
-    public void join(final Tryte environmentId) {
-
-        processor.include(entity, environmentId);
-    }
-
-    @Override
-    public void leave(final Tryte environmentId) {
-
-        processor.exclude(entity, environmentId);
+        processor.exclude(entity, environment);
     }
 }

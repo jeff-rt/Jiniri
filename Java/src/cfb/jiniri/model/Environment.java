@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Environment {
 
-    public static final Tryte BORDER_ENVIRONMENT = Tryte.ZERO;
+    public static final Tryte TEMPORAL_ENVIRONMENT = Tryte.ZERO;
 
     private final Set<Entity> entities;
 

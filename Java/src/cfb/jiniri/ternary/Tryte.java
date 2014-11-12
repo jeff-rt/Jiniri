@@ -1,5 +1,7 @@
 package cfb.jiniri.ternary;
 
+import cfb.jiniri.util.DoubleTriple;
+
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,7 +33,13 @@ public class Tryte {
 
     public Tryte(final Trit[] trits, final int offset, final int length) {
 
-        width = length;
+        int width = length;
+        while (!DoubleTriple.validateWidth(width)) {
+
+            width++;
+        }
+        this.width = width;
+
         value = getBigInteger(trits, offset, length);
     }
 
@@ -41,6 +49,11 @@ public class Tryte {
     }
 
     public Tryte(final int width, final Tryte tryte) {
+
+        if (!DoubleTriple.validateWidth(width)) {
+
+            throw new IllegalArgumentException("Illegal width");
+        }
 
         final Trit[] trits = new Trit[width];
         for (int i = 0; i < trits.length; i++) {
@@ -238,6 +251,11 @@ public class Tryte {
 
                 trits.set(i, trits.get(i).not());
             }
+        }
+
+        while (!DoubleTriple.validateWidth(trits.size())) {
+
+            trits.add(Trit.UNKNOWN);
         }
 
         return trits.toArray(new Trit[trits.size()]);
