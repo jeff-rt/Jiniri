@@ -7,6 +7,16 @@ import cfb.jiniri.ternary.Tryte;
  */
 public interface Routines {
 
+    public void idle();
+
+    public void push(final Tryte memoryOffset,
+                     final Tryte destination, final Tryte destinationOffset,
+                     final Tryte numberOfTritsToPush, final Tryte offsetForNumberOfPushedTrits);
+
+    public void pull(final Tryte memoryOffset,
+                     final Tryte source, final Tryte sourceOffset,
+                     final Tryte numberOfTritsToPull, final Tryte offsetForNumberOfPulledTrits);
+
     public void halt();
 
     public void spawn(final Tryte entityDomain,

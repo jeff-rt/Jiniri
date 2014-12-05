@@ -43,6 +43,22 @@ public class Core implements Routines {
     }
 
     @Override
+    public void idle() {
+    }
+
+    @Override
+    public void push(final Tryte memoryOffset,
+                     final Tryte destination, final Tryte destinationOffset,
+                     final Tryte numberOfTritsToPush, final Tryte offsetForNumberOfPushedTrits) {
+    }
+
+    @Override
+    public void pull(final Tryte memoryOffset,
+                     final Tryte source, final Tryte sourceOffset,
+                     final Tryte numberOfTritsToPull, final Tryte offsetForNumberOfPulledTrits) {
+    }
+
+    @Override
     public void halt() {
 
         throw new RuntimeException("Halt");
