@@ -22,26 +22,9 @@ public class Functions {
         return new Variable(variable1.get().and(variable2.get()));
     }
 
-    public static Variable cmp(final Variable variable1, final Variable variable2,
-                               final Variable variable3, final Variable variable4, final Variable variable5) {
+    public static Variable cmp(final Variable variable1, final Variable variable2) {
 
-        switch (variable1.get().cmp(variable2.get()).getIntValue()) {
-
-            case -1: {
-
-                return new Variable(variable3.get());
-            }
-
-            case 1: {
-
-                return new Variable(variable5.get());
-            }
-
-            default: {
-
-                return new Variable(variable4.get());
-            }
-        }
+        return new Variable(variable1.get().cmp(variable2.get()));
     }
 
     public static Variable add(final Variable variable1, final Variable variable2) {
