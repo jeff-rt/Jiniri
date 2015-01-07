@@ -1,10 +1,7 @@
 package cfb.jiniri.ternary;
 
-import cfb.jiniri.util.DoubleTriple;
-
 import java.math.BigInteger;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * (c) 2014 Come-from-Beyond
@@ -16,6 +13,16 @@ public class Tryte {
     public static final Tryte PLUS_ONE = new Tryte(BigInteger.ONE);
 
     private static final BigInteger RADIX = BigInteger.valueOf(Trit.RADIX);
+
+    private static final Set<Integer> VALID_WIDTHS = new HashSet<>(Arrays.asList(new Integer[] {
+
+            Integer.valueOf(1),
+            Integer.valueOf(3),
+            Integer.valueOf(9),
+            Integer.valueOf(27),
+            Integer.valueOf(81),
+            Integer.valueOf(243)
+    }));
 
     private final int width;
     private final BigInteger value;
@@ -34,7 +41,7 @@ public class Tryte {
     public Tryte(final Trit[] trits, final int offset, final int length) {
 
         int width = length;
-        while (!DoubleTriple.validateWidth(width)) {
+        while (!VALID_WIDTHS.contains(width)) {
 
             width++;
         }
@@ -50,7 +57,7 @@ public class Tryte {
 
     public Tryte(final int width, final Tryte tryte) {
 
-        if (!DoubleTriple.validateWidth(width)) {
+        if (!VALID_WIDTHS.contains(width)) {
 
             throw new IllegalArgumentException("Illegal width");
         }
@@ -253,7 +260,7 @@ public class Tryte {
             }
         }
 
-        while (!DoubleTriple.validateWidth(trits.size())) {
+        while (!VALID_WIDTHS.contains(trits.size())) {
 
             trits.add(Trit.UNKNOWN);
         }
