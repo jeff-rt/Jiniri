@@ -72,7 +72,7 @@ public class Processor {
         deferredCalls = new ConcurrentLinkedQueue<>();
     }
 
-    public void launch(final Class seedEntityClass, final Tryte maxEffectDataAndScratchpadSize,
+    public void launch(final Class seedEntityClass, final Tryte maxDataSize,
                        final Trit[] data) {
 
         time = Tryte.ZERO;
@@ -92,7 +92,7 @@ public class Processor {
 
             throw new RuntimeException(e);
         }
-        if (seedEntity.getStateSize() + maxEffectDataAndScratchpadSize.getIntValue() > coreMemoryCapacity) {
+        if (maxDataSize.getIntValue() > coreMemoryCapacity) {
 
             throw new IllegalArgumentException("Not enough core memory capacity");
         }
@@ -208,13 +208,13 @@ public class Processor {
         }
     }
 
-    void create(final Tryte entityDomain,
-                final Class entityClass, final Tryte maxEffectDataAndScratchpadSize,
+    void create(final Tryte entityHeight,
+                final Class entityClass, final Tryte maxDataSize,
                 final Trit[] data) {
 
-        if (entityDomain.getLongValue() >= 0) {
+        if (entityHeight.getLongValue() != 0) {
 
-            throw new IllegalArgumentException("Illegal domain");
+            throw new IllegalArgumentException("Illegal height");
         }
 
         deferredCalls.offer(() -> {
@@ -228,7 +228,7 @@ public class Processor {
 
                 throw new RuntimeException(e);
             }
-            if (entity.getStateSize() + maxEffectDataAndScratchpadSize.getIntValue() <= coreMemoryCapacity) {
+            if (maxDataSize.getIntValue() <= coreMemoryCapacity) {
 
                 entityEnvelopes.put(entity, new EntityEnvelope(entity, data));
             }
@@ -244,8 +244,7 @@ public class Processor {
     }
 
     void affect(final Tryte environmentId,
-                final Tryte effectRange, final Tryte effectEffectiveness,
-                final Tryte effectDelay, final Tryte effectDuration,
+                final Tryte effectDirection, final Tryte effectDelay, final Tryte effectDuration,
                 final Trit[] data) {
 
         (effectDelay.getLongValue() <= 0 ? immediateCalls : deferredCalls).offer(() -> {
@@ -256,14 +255,7 @@ public class Processor {
                 final Effect effect = new Effect(new Tryte(time.getLongValue() + effectDelay.getLongValue()),
                         new Tryte(time.getLongValue() + effectDuration.getLongValue()),
                         data);
-                long numberOfAffectedEntities = 0;
                 for (final Entity affectedEntity : environment.getEntities()) {
-
-                    if (effectEffectiveness.getLongValue() > 0
-                            && ++numberOfAffectedEntities > effectEffectiveness.getLongValue()) {
-
-                        break;
-                    }
 
                     entityEnvelopes.get(affectedEntity).effects.add(effect);
                 }

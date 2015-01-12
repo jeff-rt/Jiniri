@@ -16,12 +16,7 @@ public class Tryte {
 
     private static final Set<Integer> VALID_WIDTHS = new HashSet<>(Arrays.asList(new Integer[] {
 
-            Integer.valueOf(1),
-            Integer.valueOf(3),
-            Integer.valueOf(9),
-            Integer.valueOf(27),
-            Integer.valueOf(81),
-            Integer.valueOf(243)
+            1, 3, 9, 27, 81, 243
     }));
 
     private final int width;

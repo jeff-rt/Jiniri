@@ -43,19 +43,21 @@ public class Core implements Routines {
     }
 
     @Override
-    public void idle() {
+    public void run(final Tryte behaviorAddress, final Tryte behaviorSize,
+                    final Tryte stateAddress, final Tryte stateSize,
+                    final Tryte effectAddress, final Tryte effectSize) {
     }
 
     @Override
-    public void push(final Tryte memoryOffset,
-                     final Tryte destination, final Tryte destinationOffset,
-                     final Tryte numberOfTritsToPush, final Tryte offsetForNumberOfPushedTrits) {
+    public void push(final Tryte memoryAddress,
+                     final Tryte destination, final Tryte destinationAddress,
+                     final Tryte numberOfTrits, final Tryte addressForStatus) {
     }
 
     @Override
-    public void pull(final Tryte memoryOffset,
-                     final Tryte source, final Tryte sourceOffset,
-                     final Tryte numberOfTritsToPull, final Tryte offsetForNumberOfPulledTrits) {
+    public void pull(final Tryte memoryAddress,
+                     final Tryte source, final Tryte sourceAddress,
+                     final Tryte numberOfTrits, final Tryte addressForStatus) {
     }
 
     @Override
@@ -65,14 +67,14 @@ public class Core implements Routines {
     }
 
     @Override
-    public void spawn(final Tryte entityDomain,
-                      final Class entityClass, final Tryte maxEffectDataAndScratchpadSize,
-                      final Tryte effectDataPointer, final Tryte effectDataSize) {
+    public void spawn(final Tryte entityHeight,
+                      final Class entityClass, final Tryte maxDataSize,
+                      final Tryte effectDataAddress, final Tryte effectDataSize) {
 
         final Trit[] data = new Trit[effectDataSize.getIntValue()];
-        System.arraycopy(scratchpad, effectDataPointer.getIntValue(), data, 0, data.length);
+        System.arraycopy(scratchpad, effectDataAddress.getIntValue(), data, 0, data.length);
 
-        processor.create(entityDomain, entityClass, maxEffectDataAndScratchpadSize, data);
+        processor.create(entityHeight, entityClass, maxDataSize, data);
     }
 
     @Override
@@ -83,14 +85,13 @@ public class Core implements Routines {
 
     @Override
     public void affect(final Tryte environment,
-                       final Tryte effectRange, final Tryte effectEffectiveness,
-                       final Tryte effectDelay, final Tryte effectDuration,
-                       final Tryte effectDataPointer, final Tryte effectDataSize) {
+                       final Tryte effectDirection, final Tryte effectDelay, final Tryte effectDuration,
+                       final Tryte effectDataAddress, final Tryte effectDataSize) {
 
         final Trit[] data = new Trit[effectDataSize.getIntValue()];
-        System.arraycopy(scratchpad, effectDataPointer.getIntValue(), data, 0, data.length);
+        System.arraycopy(scratchpad, effectDataAddress.getIntValue(), data, 0, data.length);
 
-        processor.affect(environment, effectRange, effectEffectiveness, effectDelay, effectDuration, data);
+        processor.affect(environment, effectDirection, effectDelay, effectDuration, data);
     }
 
     @Override
