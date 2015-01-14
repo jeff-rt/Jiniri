@@ -208,13 +208,13 @@ public class Processor {
         }
     }
 
-    void create(final Tryte entityHeight,
+    void create(final Tryte domain,
                 final Class entityClass, final Tryte maxDataSize,
                 final Trit[] data) {
 
-        if (entityHeight.getLongValue() != 0) {
+        if (domain.getLongValue() != 0) {
 
-            throw new IllegalArgumentException("Illegal height");
+            throw new IllegalArgumentException("Illegal domain");
         }
 
         deferredCalls.offer(() -> {
@@ -243,8 +243,8 @@ public class Processor {
         });
     }
 
-    void affect(final Tryte environmentId,
-                final Tryte effectDirection, final Tryte effectDelay, final Tryte effectDuration,
+    void affect(final Tryte domain, final Tryte environmentId,
+                final Tryte effectDelay, final Tryte effectDuration,
                 final Trit[] data) {
 
         (effectDelay.getLongValue() <= 0 ? immediateCalls : deferredCalls).offer(() -> {

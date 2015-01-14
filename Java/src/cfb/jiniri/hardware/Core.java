@@ -43,38 +43,20 @@ public class Core implements Routines {
     }
 
     @Override
-    public void run(final Tryte behaviorAddress, final Tryte behaviorSize,
-                    final Tryte stateAddress, final Tryte stateSize,
-                    final Tryte effectAddress, final Tryte effectSize) {
-    }
-
-    @Override
-    public void push(final Tryte memoryAddress,
-                     final Tryte destination, final Tryte destinationAddress,
-                     final Tryte numberOfTrits, final Tryte addressForStatus) {
-    }
-
-    @Override
-    public void pull(final Tryte memoryAddress,
-                     final Tryte source, final Tryte sourceAddress,
-                     final Tryte numberOfTrits, final Tryte addressForStatus) {
-    }
-
-    @Override
     public void halt() {
 
         throw new RuntimeException("Halt");
     }
 
     @Override
-    public void spawn(final Tryte entityHeight,
+    public void spawn(final Tryte domain,
                       final Class entityClass, final Tryte maxDataSize,
                       final Tryte effectDataAddress, final Tryte effectDataSize) {
 
         final Trit[] data = new Trit[effectDataSize.getIntValue()];
         System.arraycopy(scratchpad, effectDataAddress.getIntValue(), data, 0, data.length);
 
-        processor.create(entityHeight, entityClass, maxDataSize, data);
+        processor.create(domain, entityClass, maxDataSize, data);
     }
 
     @Override
@@ -84,14 +66,14 @@ public class Core implements Routines {
     }
 
     @Override
-    public void affect(final Tryte environment,
-                       final Tryte effectDirection, final Tryte effectDelay, final Tryte effectDuration,
+    public void affect(final Tryte domain, final Tryte environment,
+                       final Tryte effectDelay, final Tryte effectDuration,
                        final Tryte effectDataAddress, final Tryte effectDataSize) {
 
         final Trit[] data = new Trit[effectDataSize.getIntValue()];
         System.arraycopy(scratchpad, effectDataAddress.getIntValue(), data, 0, data.length);
 
-        processor.affect(environment, effectDirection, effectDelay, effectDuration, data);
+        processor.affect(domain, environment, effectDelay, effectDuration, data);
     }
 
     @Override
