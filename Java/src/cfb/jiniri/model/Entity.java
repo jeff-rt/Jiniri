@@ -26,5 +26,7 @@ public abstract class Entity {
         return state.length;
     }
 
+    public abstract int getMaxDataSize();
+
     public abstract void react(final Trit[] effectData, final Trit[] scratchpad, final Routines routines);
 }

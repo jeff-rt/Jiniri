@@ -148,7 +148,7 @@ public class Processor {
                             while (true) {
 
                                 final Effect effect = entityEnvelope.effects.first();
-                                if (effect.getEarliestTime().getLongValue() <= time.getLongValue()) {
+                                if (effect.getTime().getLongValue() <= time.getLongValue()) {
 
                                     effects.add(effect);
                                     entityEnvelope.effects.remove(effect);
@@ -208,14 +208,8 @@ public class Processor {
         }
     }
 
-    void create(final Tryte domain,
-                final Class entityClass, final Tryte maxDataSize,
-                final Trit[] data) {
-
-        if (domain.getLongValue() != 0) {
-
-            throw new IllegalArgumentException("Illegal domain");
-        }
+    void create(final Class entityClass,
+                final Trit[] initializationData) {
 
         deferredCalls.offer(() -> {
 
@@ -228,9 +222,9 @@ public class Processor {
 
                 throw new RuntimeException(e);
             }
-            if (maxDataSize.getIntValue() <= coreMemoryCapacity) {
+            if (entity.getMaxDataSize() <= coreMemoryCapacity) {
 
-                entityEnvelopes.put(entity, new EntityEnvelope(entity, data));
+                entityEnvelopes.put(entity, new EntityEnvelope(entity, initializationData));
             }
         });
     }
@@ -243,18 +237,15 @@ public class Processor {
         });
     }
 
-    void affect(final Tryte domain, final Tryte environmentId,
-                final Tryte effectDelay, final Tryte effectDuration,
-                final Trit[] data) {
+    void affect(final Tryte environmentId,
+                final Tryte effectDelay, final Trit[] data) {
 
         (effectDelay.getLongValue() <= 0 ? immediateCalls : deferredCalls).offer(() -> {
 
             final Environment environment = environments.get(environmentId);
             if (environment != null) {
 
-                final Effect effect = new Effect(new Tryte(time.getLongValue() + effectDelay.getLongValue()),
-                        new Tryte(time.getLongValue() + effectDuration.getLongValue()),
-                        data);
+                final Effect effect = new Effect(new Tryte(time.getLongValue() + effectDelay.getLongValue()), data);
                 for (final Entity affectedEntity : environment.getEntities()) {
 
                     entityEnvelopes.get(affectedEntity).effects.add(effect);

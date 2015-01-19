@@ -8,15 +8,12 @@ import cfb.jiniri.ternary.Tryte;
  */
 public class Effect implements Comparable<Effect> {
 
-    private final Tryte earliestTime;
-    private final Tryte latestTime;
-
+    private final Tryte time;
     private final Trit[] data;
 
-    public Effect(final Tryte earliestTime, final Tryte latestTime, final Trit[] data) {
+    public Effect(final Tryte time, final Trit[] data) {
 
-        this.earliestTime = earliestTime;
-        this.latestTime = latestTime;
+        this.time = time;
 
         this.data = new Trit[data.length];
         System.arraycopy(data, 0, this.data, 0, data.length);
@@ -24,17 +21,12 @@ public class Effect implements Comparable<Effect> {
 
     public Effect(final Trit[] data) {
 
-        this(Tryte.ZERO, Tryte.ZERO, data);
+        this(Tryte.ZERO, data);
     }
 
-    public Tryte getEarliestTime() {
+    public Tryte getTime() {
 
-        return earliestTime;
-    }
-
-    public Tryte getLatestTime() {
-
-        return latestTime;
+        return time;
     }
 
     public Trit[] getData() {
@@ -50,11 +42,11 @@ public class Effect implements Comparable<Effect> {
     @Override
     public int compareTo(final Effect effect) {
 
-        if (getEarliestTime().cmp(effect.getEarliestTime()).getIntValue() < 0) {
+        if (getTime().cmp(effect.getTime()).getIntValue() < 0) {
 
             return -1;
 
-        } else if (getEarliestTime().cmp(effect.getEarliestTime()).getIntValue() > 0) {
+        } else if (getTime().cmp(effect.getTime()).getIntValue() > 0) {
 
             return 1;
 

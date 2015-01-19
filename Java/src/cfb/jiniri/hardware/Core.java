@@ -49,14 +49,13 @@ public class Core implements Routines {
     }
 
     @Override
-    public void spawn(final Tryte domain,
-                      final Class entityClass, final Tryte maxDataSize,
-                      final Tryte effectDataAddress, final Tryte effectDataSize) {
+    public void spawn(final Class entityClass,
+                      final Tryte initializationDataAddress, final Tryte initializationDataSize) {
 
-        final Trit[] data = new Trit[effectDataSize.getIntValue()];
-        System.arraycopy(scratchpad, effectDataAddress.getIntValue(), data, 0, data.length);
+        final Trit[] initializationData = new Trit[initializationDataSize.getIntValue()];
+        System.arraycopy(scratchpad, initializationDataAddress.getIntValue(), initializationData, 0, initializationData.length);
 
-        processor.create(domain, entityClass, maxDataSize, data);
+        processor.create(entityClass, initializationData);
     }
 
     @Override
@@ -66,14 +65,13 @@ public class Core implements Routines {
     }
 
     @Override
-    public void affect(final Tryte domain, final Tryte environment,
-                       final Tryte effectDelay, final Tryte effectDuration,
-                       final Tryte effectDataAddress, final Tryte effectDataSize) {
+    public void affect(final Tryte environment,
+                       final Tryte effectDelay, final Tryte effectDataAddress, final Tryte effectDataSize) {
 
         final Trit[] data = new Trit[effectDataSize.getIntValue()];
         System.arraycopy(scratchpad, effectDataAddress.getIntValue(), data, 0, data.length);
 
-        processor.affect(domain, environment, effectDelay, effectDuration, data);
+        processor.affect(environment, effectDelay, data);
     }
 
     @Override
@@ -86,5 +84,25 @@ public class Core implements Routines {
     public void leave(final Tryte environment) {
 
         processor.exclude(entity, environment);
+    }
+
+    @Override
+    public void evaluate(final Class entityClass,
+                         final Tryte inputDataAddress, final Tryte inputDataSize,
+                         final Tryte quota) {
+
+        // TODO: Implement!
+    }
+
+    @Override
+    public void send(final Tryte channel, final Tryte messageAddress, final Tryte messageSize) {
+
+        // TODO: Implement!
+    }
+
+    @Override
+    public void receive(final Tryte channel) {
+
+        // TODO: Implement!
     }
 }
