@@ -21,11 +21,9 @@ public interface Routines {
 
     public void leave(final Tryte environment);
 
-    public void evaluate(final Class entityClass,
-                         final Tryte inputDataAddress, final Tryte inputDataSize,
-                         final Tryte quota);
+    public void broadcast(final Tryte channel, final Tryte messageAddress, final Tryte messageSize);
 
-    public void send(final Tryte channel, final Tryte messageAddress, final Tryte messageSize);
+    public void listen(final Tryte channel);
 
-    public void receive(final Tryte channel);
+    public void ignore(final Tryte channel);
 }

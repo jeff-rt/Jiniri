@@ -87,21 +87,19 @@ public class Core implements Routines {
     }
 
     @Override
-    public void evaluate(final Class entityClass,
-                         final Tryte inputDataAddress, final Tryte inputDataSize,
-                         final Tryte quota) {
+    public void broadcast(final Tryte channel, final Tryte messageAddress, final Tryte messageSize) {
 
         // TODO: Implement!
     }
 
     @Override
-    public void send(final Tryte channel, final Tryte messageAddress, final Tryte messageSize) {
+    public void listen(final Tryte channel) {
 
         // TODO: Implement!
     }
 
     @Override
-    public void receive(final Tryte channel) {
+    public void ignore(final Tryte channel) {
 
         // TODO: Implement!
     }
