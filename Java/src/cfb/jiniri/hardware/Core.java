@@ -50,12 +50,13 @@ public class Core implements Routines {
 
     @Override
     public void spawn(final Class entityClass,
-                      final Tryte initializationDataAddress, final Tryte initializationDataSize) {
+                      final Tryte initializationDataAddress, final Tryte initializationDataSize,
+                      final Tryte priority) {
 
         final Trit[] initializationData = new Trit[initializationDataSize.getIntValue()];
         System.arraycopy(scratchpad, initializationDataAddress.getIntValue(), initializationData, 0, initializationData.length);
 
-        processor.create(entityClass, initializationData);
+        processor.create(entityClass, initializationData, priority);
     }
 
     @Override

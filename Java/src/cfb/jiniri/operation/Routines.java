@@ -10,7 +10,8 @@ public interface Routines {
     public void halt();
 
     public void spawn(final Class entityClass,
-                      final Tryte initializationDataAddress, final Tryte initializationDataSize);
+                      final Tryte initializationDataAddress, final Tryte initializationDataSize,
+                      final Tryte priority);
 
     public void decay();
 

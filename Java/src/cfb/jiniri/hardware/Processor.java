@@ -209,7 +209,8 @@ public class Processor {
     }
 
     void create(final Class entityClass,
-                final Trit[] initializationData) {
+                final Trit[] initializationData,
+                final Tryte priority) {
 
         deferredCalls.offer(() -> {
 
