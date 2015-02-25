@@ -38,6 +38,7 @@ public class Processor {
 
     private final BlockingQueue<Core> cores;
     private final int coreMemoryCapacity;
+    private final Radio radio;
 
     private Tryte time;
 
@@ -52,7 +53,8 @@ public class Processor {
 
     private boolean isShuttingDown;
 
-    public Processor(final int numberOfCores, final int coreMemoryCapacity) {
+    public Processor(final int numberOfCores, final int coreMemoryCapacity,
+                     final Tryte domain, final String hostname, final int port) {
 
         cores = new ArrayBlockingQueue<>(numberOfCores);
         for (int i = 0; i < numberOfCores; i++) {
@@ -61,6 +63,8 @@ public class Processor {
         }
 
         this.coreMemoryCapacity = coreMemoryCapacity;
+
+        radio = new Radio(domain, hostname, port);
 
         entityEnvelopes = new HashMap<>();
         environments = new HashMap<>();
@@ -287,6 +291,21 @@ public class Processor {
                 entityEnvelopes.get(entity).environmentIds.remove(environmentId);
             }
         });
+    }
+
+    void broadcast(final Tryte channel, final Trit[] message) {
+
+        // TODO: Implement!
+    }
+
+    void listen(final Tryte channel) {
+
+        // TODO: Implement!
+    }
+
+    void ignore(final Tryte channel) {
+
+        // TODO: Implement!
     }
 
     private void salvage(final EntityEnvelope entityEnvelope) {

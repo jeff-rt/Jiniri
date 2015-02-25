@@ -90,18 +90,21 @@ public class Core implements Routines {
     @Override
     public void broadcast(final Tryte channel, final Tryte messageAddress, final Tryte messageSize) {
 
-        // TODO: Implement!
+        final Trit[] message = new Trit[messageSize.getIntValue()];
+        System.arraycopy(scratchpad, messageAddress.getIntValue(), message, 0, message.length);
+
+        processor.broadcast(channel, message);
     }
 
     @Override
     public void listen(final Tryte channel) {
 
-        // TODO: Implement!
+        processor.listen(channel);
     }
 
     @Override
     public void ignore(final Tryte channel) {
 
-        // TODO: Implement!
+        processor.ignore(channel);
     }
 }
