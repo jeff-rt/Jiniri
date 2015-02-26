@@ -1,7 +1,5 @@
 package cfb.jiniri.hardware;
 
-import cfb.jiniri.ternary.Tryte;
-
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -11,10 +9,14 @@ import java.net.SocketException;
  */
 public class Radio {
 
-    private Tryte domain;
+    private final Processor processor;
+
+    private int domain;
     private DatagramSocket socket;
 
-    public Radio(final Tryte domain, final String hostname, final int port) {
+    public Radio(final Processor processor, final int domain, final String hostname, final int port) {
+
+        this.processor = processor;
 
         this.domain = domain;
 
@@ -26,5 +28,10 @@ public class Radio {
 
             throw new RuntimeException(e);
         }
+    }
+
+    void broadcast(final byte[] channel, final byte[] message) {
+
+        // TODO: Implement!
     }
 }

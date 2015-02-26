@@ -22,12 +22,16 @@ public class Processor {
         final Set<Tryte> environmentIds;
         final SortedSet<Effect> effects;
 
+        final Set<Tryte> channelIds;
+
         EntityEnvelope(final Entity entity, final Trit[] data) {
 
             this.entity = entity;
 
             environmentIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
             effects = new ConcurrentSkipListSet<>();
+
+            channelIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
             if (data != null) {
 
@@ -44,6 +48,7 @@ public class Processor {
 
     private final Map<Entity, EntityEnvelope> entityEnvelopes;
     private final Map<Tryte, Environment> environments;
+    private final Map<Tryte, Set<Entity>> channels;
 
     private final ExecutorService processorExecutor;
     private final ExecutorService coreExecutor;
@@ -54,7 +59,7 @@ public class Processor {
     private boolean isShuttingDown;
 
     public Processor(final int numberOfCores, final int coreMemoryCapacity,
-                     final Tryte domain, final String hostname, final int port) {
+                     final int domain, final String hostname, final int port) {
 
         cores = new ArrayBlockingQueue<>(numberOfCores);
         for (int i = 0; i < numberOfCores; i++) {
@@ -64,10 +69,11 @@ public class Processor {
 
         this.coreMemoryCapacity = coreMemoryCapacity;
 
-        radio = new Radio(domain, hostname, port);
+        radio = new Radio(this, domain, hostname, port);
 
         entityEnvelopes = new HashMap<>();
         environments = new HashMap<>();
+        channels = new HashMap<>();
 
         processorExecutor = Executors.newSingleThreadExecutor();
         coreExecutor = Executors.newFixedThreadPool(numberOfCores);
@@ -295,17 +301,31 @@ public class Processor {
 
     void broadcast(final Tryte channel, final Trit[] message) {
 
-        // TODO: Implement!
+        radio.broadcast(Converter.getBytes(channel.getTrits()), Converter.getBytes(message));
     }
 
-    void listen(final Tryte channel) {
+    void listen(final Entity entity, final Tryte channelId) {
 
-        // TODO: Implement!
+        Set<Entity> channelEntities = channels.get(channelId);
+        if (channelEntities == null) {
+
+            channelEntities = new HashSet<>();
+            channels.put(channelId, channelEntities);
+        }
+        channelEntities.add(entity);
+
+        entityEnvelopes.get(entity).channelIds.add(channelId);
     }
 
-    void ignore(final Tryte channel) {
+    void ignore(final Entity entity, final Tryte channelId) {
 
-        // TODO: Implement!
+        final Set<Entity> channelEntities = channels.get(channelId);
+        if (channelEntities != null) {
+
+            channelEntities.remove(entity);
+        }
+
+        entityEnvelopes.get(entity).channelIds.remove(channelId);
     }
 
     private void salvage(final EntityEnvelope entityEnvelope) {

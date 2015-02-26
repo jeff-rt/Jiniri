@@ -99,12 +99,12 @@ public class Core implements Routines {
     @Override
     public void listen(final Tryte channel) {
 
-        processor.listen(channel);
+        processor.listen(entity, channel);
     }
 
     @Override
     public void ignore(final Tryte channel) {
 
-        processor.ignore(channel);
+        processor.ignore(entity, channel);
     }
 }
