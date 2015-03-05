@@ -59,7 +59,7 @@ public class Processor {
     private boolean isShuttingDown;
 
     public Processor(final int numberOfCores, final int coreMemoryCapacity,
-                     final int domain, final String hostname, final int port) {
+                     final int domain, final String ownAddress, final String[] peerAddresses) {
 
         cores = new ArrayBlockingQueue<>(numberOfCores);
         for (int i = 0; i < numberOfCores; i++) {
@@ -69,7 +69,7 @@ public class Processor {
 
         this.coreMemoryCapacity = coreMemoryCapacity;
 
-        radio = new Radio(this, domain, hostname, port);
+        radio = new Radio(this, domain, ownAddress, peerAddresses);
 
         entityEnvelopes = new HashMap<>();
         environments = new HashMap<>();

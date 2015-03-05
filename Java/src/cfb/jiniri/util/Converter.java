@@ -83,4 +83,20 @@ public class Converter {
 
         return trits.toArray(new Trit[trits.size()]);
     }
+
+    public static String getHostName(final String networkAddress) {
+
+        String hostName = networkAddress.substring(0, networkAddress.lastIndexOf(":"));
+        if (hostName.startsWith("[")) {
+
+            hostName = hostName.substring(1, hostName.length() - 1);
+        }
+
+        return hostName;
+    }
+
+    public static int getPort(final String networkAddress) {
+
+        return Integer.parseInt(networkAddress.substring(networkAddress.lastIndexOf(":") + 1));
+    }
 }
