@@ -328,6 +328,22 @@ public class Processor {
         entityEnvelopes.get(entity).channelIds.remove(channelId);
     }
 
+    void dispatch(final Tryte channelId, final Trit[] message) {
+
+        deferredCalls.offer(() -> {
+
+            final Set<Entity> channelEntities = channels.get(channelId);
+            if (channelEntities != null) {
+
+                final Effect effect = new Effect(message);
+                for (final Entity affectedEntity : channelEntities) {
+
+                    entityEnvelopes.get(affectedEntity).effects.add(effect);
+                }
+            }
+        });
+    }
+
     private void salvage(final EntityEnvelope entityEnvelope) {
 
         entityEnvelopes.remove(entityEnvelope.entity);
@@ -339,6 +355,16 @@ public class Processor {
             if (environment.getEntities().isEmpty()) {
 
                 environments.remove(environmentId);
+            }
+        }
+
+        for (final Tryte channelId : entityEnvelope.channelIds) {
+
+            final Set<Entity> channel = channels.get(channelId);
+            channel.remove(entityEnvelope.entity);
+            if (channel.isEmpty()) {
+
+                channels.remove(channelId);
             }
         }
     }

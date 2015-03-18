@@ -1,5 +1,6 @@
 package cfb.jiniri.hardware;
 
+import cfb.jiniri.ternary.Tryte;
 import cfb.jiniri.util.Converter;
 
 import java.io.IOException;
@@ -89,7 +90,11 @@ public class Radio {
 
                                     final int ttl = request.get();
 
-                                    // TODO: Implement message processing
+                                    final byte[] channel = new byte[request.get()];
+                                    request.get(channel);
+                                    final byte[] message = new byte[request.getShort()];
+                                    request.get(message);
+                                    processor.dispatch(new Tryte(Converter.getTrits(channel)), Converter.getTrits(message));
 
                                     if (ttl > 0) {
 
