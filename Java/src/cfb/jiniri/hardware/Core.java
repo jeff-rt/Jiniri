@@ -13,17 +13,15 @@ public class Core implements Routines {
 
     private final Processor processor;
 
-    private final int memoryCapacity;
-
     private Entity entity;
 
-    private Trit[] scratchpad;
+    private final Trit[] cache;
 
-    protected Core(final Processor processor, final int memoryCapacity) {
+    protected Core(final Processor processor, final int cacheCapacity) {
 
         this.processor = processor;
 
-        this.memoryCapacity = memoryCapacity;
+        cache = new Trit[cacheCapacity];
     }
 
     protected void deploy(final Entity entity) {
@@ -31,13 +29,67 @@ public class Core implements Routines {
         this.entity = entity;
     }
 
-    protected void react(final Effect[] effects) {
+    protected void executeForm(final Trit[] initializationData) {
+
+        entity.getState(cache);
+
+        System.arraycopy(initializationData, 0, cache, entity.getStateSize(), initializationData.length);
+        entity.form(cache, this);
+
+        entity.setState(cache);
+
+        processor.salvage(this);
+    }
+
+    protected void executeEvolve(final Tryte time) {
+
+        entity.getState(cache);
+
+        System.arraycopy(time.getTrits(), 0, cache, entity.getStateSize(), time.getWidth());
+        entity.morph(cache, this);
+
+        entity.setState(cache);
+
+        processor.salvage(this);
+    }
+
+    protected void executeReact(final Effect[] effects) {
+
+        entity.getState(cache);
 
         for (final Effect effect : effects) {
 
-            scratchpad = new Trit[memoryCapacity - entity.getStateSize() - effect.getDataSize()];
-            entity.react(effect.getData(), scratchpad, this);
+            System.arraycopy(effect.getData(), 0, cache, entity.getStateSize(), effect.getDataSize());
+            entity.react(cache, this);
         }
+
+        entity.setState(cache);
+
+        processor.salvage(this);
+    }
+
+    protected void executeAnalyze(final Trit[][] messages) {
+
+        entity.getState(cache);
+
+        for (final Trit[] message : messages) {
+
+            System.arraycopy(message, 0, cache, entity.getStateSize(), message.length);
+            entity.analyze(cache, this);
+        }
+
+        entity.setState(cache);
+
+        processor.salvage(this);
+    }
+
+    protected void executeDecay() {
+
+        entity.getState(cache);
+
+        entity.decay(cache, this);
+
+        entity.setState(cache);
 
         processor.salvage(this);
     }
@@ -49,14 +101,13 @@ public class Core implements Routines {
     }
 
     @Override
-    public void spawn(final Class entityClass,
-                      final Tryte initializationDataAddress, final Tryte initializationDataSize,
-                      final Tryte priority) {
+    public void form(final Class entityClass,
+                     final Tryte initializationDataAddress, final Tryte initializationDataSize) {
 
         final Trit[] initializationData = new Trit[initializationDataSize.getIntValue()];
-        System.arraycopy(scratchpad, initializationDataAddress.getIntValue(), initializationData, 0, initializationData.length);
+        System.arraycopy(cache, initializationDataAddress.getIntValue(), initializationData, 0, initializationData.length);
 
-        processor.create(entityClass, initializationData, priority);
+        processor.create(entityClass, initializationData);
     }
 
     @Override
@@ -67,12 +118,12 @@ public class Core implements Routines {
 
     @Override
     public void affect(final Tryte environment,
-                       final Tryte effectDelay, final Tryte effectDataAddress, final Tryte effectDataSize) {
+                       final Tryte effectDataAddress, final Tryte effectDataSize, final Tryte delay) {
 
         final Trit[] data = new Trit[effectDataSize.getIntValue()];
-        System.arraycopy(scratchpad, effectDataAddress.getIntValue(), data, 0, data.length);
+        System.arraycopy(cache, effectDataAddress.getIntValue(), data, 0, data.length);
 
-        processor.affect(environment, effectDelay, data);
+        processor.affect(environment, data, delay);
     }
 
     @Override
@@ -91,7 +142,7 @@ public class Core implements Routines {
     public void broadcast(final Tryte channel, final Tryte messageAddress, final Tryte messageSize) {
 
         final Trit[] message = new Trit[messageSize.getIntValue()];
-        System.arraycopy(scratchpad, messageAddress.getIntValue(), message, 0, message.length);
+        System.arraycopy(cache, messageAddress.getIntValue(), message, 0, message.length);
 
         processor.broadcast(channel, message);
     }

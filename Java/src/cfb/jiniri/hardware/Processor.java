@@ -18,33 +18,32 @@ public class Processor {
     private static final class EntityEnvelope {
 
         final Entity entity;
+        Trit[] initializationData;
+        boolean isDecaying;
 
         final Set<Tryte> environmentIds;
-        final SortedSet<Effect> effects;
+        final Queue<Effect> effects;
 
         final Set<Tryte> channelIds;
+        final Queue<Trit[]> messages;
 
-        EntityEnvelope(final Entity entity, final Trit[] data) {
+        EntityEnvelope(final Entity entity, final Trit[] initializationData) {
 
             this.entity = entity;
+            this.initializationData = initializationData;
 
             environmentIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
-            effects = new ConcurrentSkipListSet<>();
+            effects = new ConcurrentLinkedQueue<>();
 
             channelIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-            if (data != null) {
-
-                effects.add(new Effect(data));
-            }
+            messages = new ConcurrentLinkedQueue<>();
         }
     }
 
+    private final int numberOfCores;
     private final BlockingQueue<Core> cores;
-    private final int coreMemoryCapacity;
+    private final int coreCacheCapacity;
     private final Radio radio;
-
-    private Tryte time;
 
     private final Map<Entity, EntityEnvelope> entityEnvelopes;
     private final Map<Tryte, Environment> environments;
@@ -58,16 +57,18 @@ public class Processor {
 
     private boolean isShuttingDown;
 
-    public Processor(final int numberOfCores, final int coreMemoryCapacity,
+    public Processor(final int numberOfCores, final int coreCacheCapacity,
                      final int domain, final String ownAddress, final String[] peerAddresses) {
+
+        this.numberOfCores = numberOfCores;
 
         cores = new ArrayBlockingQueue<>(numberOfCores);
         for (int i = 0; i < numberOfCores; i++) {
 
-            cores.offer(new Core(this, coreMemoryCapacity));
+            cores.offer(new Core(this, coreCacheCapacity));
         }
 
-        this.coreMemoryCapacity = coreMemoryCapacity;
+        this.coreCacheCapacity = coreCacheCapacity;
 
         radio = new Radio(this, domain, ownAddress, peerAddresses);
 
@@ -85,8 +86,6 @@ public class Processor {
     public void launch(final Class seedEntityClass, final Tryte maxDataSize,
                        final Trit[] data) {
 
-        time = Tryte.ZERO;
-
         entityEnvelopes.clear();
         environments.clear();
 
@@ -102,13 +101,11 @@ public class Processor {
 
             throw new RuntimeException(e);
         }
-        if (maxDataSize.getIntValue() > coreMemoryCapacity) {
+        if (maxDataSize.getIntValue() > coreCacheCapacity) {
 
-            throw new IllegalArgumentException("Not enough core memory capacity");
+            throw new IllegalArgumentException("Not enough core cache capacity");
         }
         entityEnvelopes.put(seedEntity, new EntityEnvelope(seedEntity, data));
-
-        environments.put(Environment.TEMPORAL_ENVIRONMENT, new Environment());
 
         start();
     }
@@ -131,16 +128,37 @@ public class Processor {
                     call.run();
                 }
 
+                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+
+                    if (entityEnvelope.isDecaying ||
+                            (entityEnvelope.environmentIds.isEmpty() && entityEnvelope.effects.isEmpty())) {
+
+                        process(entityEnvelope);
+                    }
+                }
+
                 if (isShuttingDown) {
 
                     return;
                 }
 
-                time = time.add(Tryte.PLUS_ONE);
-                final Effect[] evolutionEffect = {new Effect(Converter.combine(Environment.TEMPORAL_ENVIRONMENT, time, new Tryte(System.currentTimeMillis())))};
-                for (final Entity entity : environments.get(Environment.TEMPORAL_ENVIRONMENT).getEntities()) {
+                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
 
-                    process(entityEnvelopes.get(entity), evolutionEffect);
+                    if (entityEnvelope.initializationData != null) {
+
+                        process(entityEnvelope, entityEnvelope.initializationData);
+
+                        entityEnvelope.initializationData = null;
+                    }
+                }
+
+                final Tryte time = new Tryte(System.currentTimeMillis());
+                for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
+
+                    if (entityEnvelope.entity.morphs()) {
+
+                        process(entityEnvelope, time);
+                    }
                 }
 
                 do {
@@ -152,34 +170,18 @@ public class Processor {
 
                     for (final EntityEnvelope entityEnvelope : entityEnvelopes.values()) {
 
-                        final List<Effect> effects = new LinkedList<>();
-                        try {
+                        if (!entityEnvelope.effects.isEmpty()) {
 
-                            while (true) {
-
-                                final Effect effect = entityEnvelope.effects.first();
-                                if (effect.getTime().getLongValue() <= time.getLongValue()) {
-
-                                    effects.add(effect);
-                                    entityEnvelope.effects.remove(effect);
-                                }
-                            }
-
-                        } catch (final NoSuchElementException e) {
+                            process(entityEnvelope, entityEnvelope.effects.toArray(new Effect[entityEnvelope.effects.size()]));
                         }
 
-                        if (effects.size() > 0) {
+                        if (!entityEnvelope.messages.isEmpty()) {
 
-                            process(entityEnvelope, effects.toArray(new Effect[effects.size()]));
+                            process(entityEnvelope, entityEnvelope.messages.toArray(new Trit[entityEnvelope.messages.size()][]));
                         }
                     }
 
-                } while (!immediateCalls.isEmpty());
-
-                entityEnvelopes.values().stream()
-                        .filter(entityEnvelope -> entityEnvelope.environmentIds.isEmpty()
-                                && entityEnvelope.effects.isEmpty())
-                        .forEach(this::salvage);
+                } while (!immediateCalls.isEmpty() || cores.size() < numberOfCores);
             }
         });
     }
@@ -189,7 +191,7 @@ public class Processor {
         isShuttingDown = true;
     }
 
-    private void process(final EntityEnvelope entityEnvelope, final Effect... effects) {
+    private void process(final EntityEnvelope entityEnvelope, final Trit[] initializationData) {
 
         try {
 
@@ -197,7 +199,77 @@ public class Processor {
             coreExecutor.execute(() -> {
 
                 core.deploy(entityEnvelope.entity);
-                core.react(effects);
+                core.executeForm(initializationData);
+            });
+
+        } catch (final InterruptedException e) {
+
+            e.printStackTrace();
+        }
+    }
+
+    private void process(final EntityEnvelope entityEnvelope, final Tryte time) {
+
+        try {
+
+            final Core core = cores.take();
+            coreExecutor.execute(() -> {
+
+                core.deploy(entityEnvelope.entity);
+                core.executeEvolve(time);
+            });
+
+        } catch (final InterruptedException e) {
+
+            e.printStackTrace();
+        }
+    }
+
+    private void process(final EntityEnvelope entityEnvelope, final Effect[] effects) {
+
+        try {
+
+            final Core core = cores.take();
+            coreExecutor.execute(() -> {
+
+                core.deploy(entityEnvelope.entity);
+                core.executeReact(effects);
+            });
+
+        } catch (final InterruptedException e) {
+
+            e.printStackTrace();
+        }
+    }
+
+    private void process(final EntityEnvelope entityEnvelope, final Trit[][] messages) {
+
+        try {
+
+            final Core core = cores.take();
+            coreExecutor.execute(() -> {
+
+                core.deploy(entityEnvelope.entity);
+                core.executeAnalyze(messages);
+            });
+
+        } catch (final InterruptedException e) {
+
+            e.printStackTrace();
+        }
+    }
+
+    private void process(final EntityEnvelope entityEnvelope) {
+
+        try {
+
+            final Core core = cores.take();
+            coreExecutor.execute(() -> {
+
+                core.deploy(entityEnvelope.entity);
+                core.executeDecay();
+
+                salvage(entityEnvelope);
             });
 
         } catch (final InterruptedException e) {
@@ -219,8 +291,7 @@ public class Processor {
     }
 
     void create(final Class entityClass,
-                final Trit[] initializationData,
-                final Tryte priority) {
+                final Trit[] initializationData) {
 
         deferredCalls.offer(() -> {
 
@@ -233,7 +304,7 @@ public class Processor {
 
                 throw new RuntimeException(e);
             }
-            if (entity.getMaxDataSize() <= coreMemoryCapacity) {
+            if (entity.getMaxDataSize() <= coreCacheCapacity) {
 
                 entityEnvelopes.put(entity, new EntityEnvelope(entity, initializationData));
             }
@@ -244,19 +315,24 @@ public class Processor {
 
         deferredCalls.offer(() -> {
 
-            salvage(entityEnvelopes.get(entity));
+            entityEnvelopes.get(entity).isDecaying = true;
         });
     }
 
     void affect(final Tryte environmentId,
-                final Tryte effectDelay, final Trit[] data) {
+                final Trit[] data, final Tryte delay) {
 
-        (effectDelay.getLongValue() <= 0 ? immediateCalls : deferredCalls).offer(() -> {
+        if (delay.getIntValue() < 0) {
+
+            throw new UnsupportedOperationException("Delays below zero not supported");
+        }
+
+        (delay.getIntValue() == 0 ? immediateCalls : deferredCalls).offer(() -> {
 
             final Environment environment = environments.get(environmentId);
             if (environment != null) {
 
-                final Effect effect = new Effect(new Tryte(time.getLongValue() + effectDelay.getLongValue()), data);
+                final Effect effect = new Effect(data, delay);
                 for (final Entity affectedEntity : environment.getEntities()) {
 
                     entityEnvelopes.get(affectedEntity).effects.add(effect);
@@ -289,7 +365,7 @@ public class Processor {
             if (environment != null) {
 
                 environment.exclude(entity);
-                if (environment.getEntities().isEmpty() && !environmentId.equals(Environment.TEMPORAL_ENVIRONMENT)) {
+                if (environment.getEntities().isEmpty()) {
 
                     environments.remove(environmentId);
                 }
@@ -335,10 +411,9 @@ public class Processor {
             final Set<Entity> channelEntities = channels.get(channelId);
             if (channelEntities != null) {
 
-                final Effect effect = new Effect(message);
                 for (final Entity affectedEntity : channelEntities) {
 
-                    entityEnvelopes.get(affectedEntity).effects.add(effect);
+                    entityEnvelopes.get(affectedEntity).messages.add(message);
                 }
             }
         });

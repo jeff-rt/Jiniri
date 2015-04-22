@@ -1,7 +1,5 @@
 package cfb.jiniri.model;
 
-import cfb.jiniri.ternary.Tryte;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,8 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * (c) 2014 Come-from-Beyond
  */
 public class Environment {
-
-    public static final Tryte TEMPORAL_ENVIRONMENT = Tryte.ZERO;
 
     private final Set<Entity> entities;
 
