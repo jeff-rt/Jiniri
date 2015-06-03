@@ -41,7 +41,7 @@ public class Core implements Routines {
         processor.salvage(this);
     }
 
-    protected void executeEvolve(final Tryte time) {
+    protected void executeMorph(final Tryte time) {
 
         entity.getState(cache);
 

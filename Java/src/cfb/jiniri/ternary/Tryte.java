@@ -14,11 +14,6 @@ public class Tryte {
 
     private static final BigInteger RADIX = BigInteger.valueOf(Trit.RADIX);
 
-    private static final Set<Integer> VALID_WIDTHS = new HashSet<>(Arrays.asList(new Integer[] {
-
-            1, 3, 9, 27, 81, 243
-    }));
-
     private final int width;
     private final BigInteger value;
 
@@ -35,13 +30,7 @@ public class Tryte {
 
     public Tryte(final Trit[] trits, final int offset, final int length) {
 
-        int width = length;
-        while (!VALID_WIDTHS.contains(width)) {
-
-            width++;
-        }
-        this.width = width;
-
+        width = length;
         value = getBigInteger(trits, offset, length);
     }
 
@@ -51,11 +40,6 @@ public class Tryte {
     }
 
     public Tryte(final int width, final Tryte tryte) {
-
-        if (!VALID_WIDTHS.contains(width)) {
-
-            throw new IllegalArgumentException("Illegal width");
-        }
 
         final Trit[] trits = new Trit[width];
         for (int i = 0; i < trits.length; i++) {
@@ -253,11 +237,6 @@ public class Tryte {
 
                 trits.set(i, trits.get(i).not());
             }
-        }
-
-        while (!VALID_WIDTHS.contains(trits.size())) {
-
-            trits.add(Trit.UNKNOWN);
         }
 
         return trits.toArray(new Trit[trits.size()]);

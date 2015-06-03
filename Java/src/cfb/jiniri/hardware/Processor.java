@@ -216,7 +216,7 @@ public class Processor {
             coreExecutor.execute(() -> {
 
                 core.deploy(entityEnvelope.entity);
-                core.executeEvolve(time);
+                core.executeMorph(time);
             });
 
         } catch (final InterruptedException e) {
